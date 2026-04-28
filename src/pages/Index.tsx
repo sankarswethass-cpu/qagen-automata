@@ -1,16 +1,26 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import PageShell from "@/components/site/PageShell";
+import Hero from "@/components/landing/Hero";
+import Problem from "@/components/landing/Problem";
+import HowItWorks from "@/components/landing/HowItWorks";
+import Showcase from "@/components/landing/Showcase";
+import Outputs from "@/components/landing/Outputs";
+import Integrations from "@/components/landing/Integrations";
+import SocialProof from "@/components/landing/SocialProof";
+import FinalCTA from "@/components/landing/FinalCTA";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
+    <PageShell>
+      <Hero />
+      <Problem />
+      <HowItWorks />
+      <Showcase />
+      <Outputs />
+      <Integrations />
+      <SocialProof />
+      <FinalCTA />
+    </PageShell>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
