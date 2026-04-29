@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Zap, Search, Lock, Link2, FileCode, BarChart3, Clock, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
@@ -23,6 +23,7 @@ const cards = [
 type FieldErrors = Record<string, string>;
 
 export default function Login() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -52,8 +53,9 @@ export default function Login() {
     const e = validate(data, ["email", "password"]);
     setErrors(e);
     if (Object.keys(e).length === 0) {
-      toast.success("Welcome back! Redirecting to dashboard...");
+      toast.success("Welcome back! Opening workbench…");
       ev.currentTarget.reset();
+      setTimeout(() => navigate("/app"), 400);
     }
   }
 
@@ -63,8 +65,9 @@ export default function Login() {
     const e = validate(data, ["name", "email", "company", "password", "confirm"]);
     setErrors(e);
     if (Object.keys(e).length === 0) {
-      toast.success("Account created! Check your email to verify.");
+      toast.success("Account created! Opening workbench…");
       ev.currentTarget.reset();
+      setTimeout(() => navigate("/app"), 400);
     }
   }
 
