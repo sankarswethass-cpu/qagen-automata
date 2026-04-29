@@ -18,7 +18,6 @@ export default function Footer() {
           <h4 className="font-display text-lg mb-3">Explore</h4>
           <ul className="space-y-2 text-sm text-white/75">
             <li><Link to="/" className="hover:text-accent">Landing Page</Link></li>
-            <li><Link to="/prd" className="hover:text-accent">PRD</Link></li>
             <li><Link to="/login" className="hover:text-accent">Login</Link></li>
             <li><Link to="/demo" className="hover:text-accent">Request Demo</Link></li>
           </ul>
