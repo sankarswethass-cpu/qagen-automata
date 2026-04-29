@@ -37,72 +37,227 @@ Steps:
   5. Observe failed-attempt counter        → Incremented
 
 Expected: "Invalid credentials" error, no session created.`,
-  ui: `import { test, expect } from '@playwright/test';
+  ui: `import { test, expect, devices } from '@playwright/test';
 
-test.describe('Login flow — UI', () => {
-  test('TC-001 valid login redirects to dashboard', async ({ page }) => {
+test.describe('Login — UI Automation (full coverage)', () => {
+  // ───── Happy Path ─────
+  test('TC-UI-001 [Happy Path] valid login redirects to dashboard', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Email').fill('user@example.com');
     await page.getByLabel('Password').fill('Password@123');
     await page.getByRole('button', { name: /sign in/i }).click();
     await expect(page).toHaveURL(/dashboard/);
+    await expect(page.getByText(/welcome back/i)).toBeVisible();
   });
 
-  test('TC-002 invalid password shows error', async ({ page }) => {
+  test('TC-UI-002 [Happy Path] "Remember me" persists session', async ({ page, context }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('user@example.com');
+    await page.getByLabel('Password').fill('Password@123');
+    await page.getByLabel(/remember me/i).check();
+    await page.getByRole('button', { name: /sign in/i }).click();
+    const cookies = await context.cookies();
+    expect(cookies.find(c => c.name === 'session')?.expires).toBeGreaterThan(Date.now() / 1000);
+  });
+
+  // ───── Negative ─────
+  test('TC-UI-003 [Negative] invalid password shows error', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('Email').fill('user@example.com');
     await page.getByLabel('Password').fill('wrong-pass');
     await page.getByRole('button', { name: /sign in/i }).click();
     await expect(page.getByText(/invalid credentials/i)).toBeVisible();
+    await expect(page).toHaveURL(/login/);
   });
 
-  test('TC-003 responsive layout — mobile', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 812 });
+  test('TC-UI-004 [Negative] empty fields show validation errors', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible();
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page.getByText(/email is required/i)).toBeVisible();
+    await expect(page.getByText(/password is required/i)).toBeVisible();
+  });
+
+  // ───── Edge Cases ─────
+  test('TC-UI-005 [Edge] email with leading/trailing spaces is trimmed', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('  user@example.com  ');
+    await page.getByLabel('Password').fill('Password@123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page).toHaveURL(/dashboard/);
+  });
+
+  test('TC-UI-006 [Edge] unicode + emoji password accepted', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('intl@example.com');
+    await page.getByLabel('Password').fill('Pässwörd🔐123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page).toHaveURL(/dashboard/);
+  });
+
+  // ───── Boundary ─────
+  test('TC-UI-007 [Boundary] password at min length (8) succeeds', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('min@example.com');
+    await page.getByLabel('Password').fill('Pass@123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page).toHaveURL(/dashboard/);
+  });
+
+  test('TC-UI-008 [Boundary] password below min length blocked', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('user@example.com');
+    await page.getByLabel('Password').fill('Pa@1');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page.getByText(/at least 8 characters/i)).toBeVisible();
+  });
+
+  // ───── Security ─────
+  test('TC-UI-009 [Security] XSS payload in email is escaped', async ({ page }) => {
+    await page.goto('/login');
+    await page.getByLabel('Email').fill('<script>alert(1)</script>@x.io');
+    await page.getByLabel('Password').fill('Password@123');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page.getByText(/invalid email/i)).toBeVisible();
+  });
+
+  test('TC-UI-010 [Security] password field uses type="password"', async ({ page }) => {
+    await page.goto('/login');
+    await expect(page.getByLabel('Password')).toHaveAttribute('type', 'password');
+  });
+
+  // ───── Cross-Platform ─────
+  test('TC-UI-011 [Cross-Platform] iPhone 13 viewport renders form', async ({ browser }) => {
+    const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+    const page = await ctx.newPage();
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+    await ctx.close();
+  });
+
+  test('TC-UI-012 [Cross-Platform] tablet landscape layout', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto('/login');
+    await expect(page.getByLabel('Email')).toBeVisible();
   });
 });`,
-  api: `import { test, expect, request } from '@playwright/test';
+  api: `import { test, expect } from '@playwright/test';
 
-test.describe('Auth API', () => {
-  test('POST /api/login — valid credentials returns 200 + token', async ({ request }) => {
+test.describe('Auth API — Automation (full coverage)', () => {
+  // ───── Happy Path ─────
+  test('TC-API-001 [Happy Path] valid credentials returns 200 + token', async ({ request }) => {
     const res = await request.post('/api/login', {
       data: { email: 'user@example.com', password: 'Password@123' },
     });
     expect(res.status()).toBe(200);
     const body = await res.json();
     expect(body.token).toBeTruthy();
+    expect(body.user.email).toBe('user@example.com');
   });
 
-  test('POST /api/login — invalid password returns 401', async ({ request }) => {
+  test('TC-API-002 [Happy Path] response schema matches contract', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      data: { email: 'user@example.com', password: 'Password@123' },
+    });
+    const body = await res.json();
+    expect(body).toMatchObject({
+      token: expect.any(String),
+      user: { id: expect.any(String), email: expect.any(String) },
+      expiresIn: expect.any(Number),
+    });
+  });
+
+  // ───── Negative ─────
+  test('TC-API-003 [Negative] invalid password returns 401', async ({ request }) => {
     const res = await request.post('/api/login', {
       data: { email: 'user@example.com', password: 'wrong' },
     });
     expect(res.status()).toBe(401);
   });
 
-  test('POST /api/login — rate limit after 5 attempts', async ({ request }) => {
-    for (let i = 0; i < 5; i++) {
-      await request.post('/api/login', { data: { email: 'x@x.io', password: 'no' } });
-    }
-    const res = await request.post('/api/login', { data: { email: 'x@x.io', password: 'no' } });
-    expect(res.status()).toBe(429);
+  test('TC-API-004 [Negative] missing fields returns 400', async ({ request }) => {
+    const res = await request.post('/api/login', { data: {} });
+    expect(res.status()).toBe(400);
   });
 
-  test('POST /api/login — SQL injection payload safely rejected', async ({ request }) => {
+  test('TC-API-005 [Negative] non-existent user returns 401 (no enumeration)', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      data: { email: 'ghost@example.com', password: 'Password@123' },
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  // ───── Edge Cases ─────
+  test('TC-API-006 [Edge] email is case-insensitive', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      data: { email: 'USER@Example.COM', password: 'Password@123' },
+    });
+    expect(res.status()).toBe(200);
+  });
+
+  test('TC-API-007 [Edge] extra unknown fields are ignored', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      data: { email: 'user@example.com', password: 'Password@123', admin: true },
+    });
+    const body = await res.json();
+    expect(body.user.role).not.toBe('admin');
+  });
+
+  // ───── Boundary ─────
+  test('TC-API-008 [Boundary] 8-char password accepted', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      data: { email: 'min@example.com', password: 'Pass@123' },
+    });
+    expect([200, 401]).toContain(res.status());
+  });
+
+  test('TC-API-009 [Boundary] 256-char email rejected', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      data: { email: 'a'.repeat(250) + '@x.io', password: 'Password@123' },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  // ───── Security ─────
+  test('TC-API-010 [Security] SQL injection payload safely rejected', async ({ request }) => {
     const res = await request.post('/api/login', {
       data: { email: "' OR 1=1 --", password: 'x' },
     });
     expect([400, 401]).toContain(res.status());
   });
+
+  test('TC-API-011 [Security] rate limit triggers after 5 attempts', async ({ request }) => {
+    for (let i = 0; i < 5; i++) {
+      await request.post('/api/login', { data: { email: 'x@x.io', password: 'no' } });
+    }
+    const res = await request.post('/api/login', { data: { email: 'x@x.io', password: 'no' } });
+    expect(res.status()).toBe(429);
+    expect(res.headers()['retry-after']).toBeDefined();
+  });
+
+  test('TC-API-012 [Security] response never contains password hash', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      data: { email: 'user@example.com', password: 'Password@123' },
+    });
+    const text = await res.text();
+    expect(text).not.toMatch(/passwordHash|bcrypt|\\$2[aby]\\$/i);
+  });
+
+  // ───── Cross-Platform ─────
+  test('TC-API-013 [Cross-Platform] CORS headers present for web origin', async ({ request }) => {
+    const res = await request.post('/api/login', {
+      headers: { Origin: 'https://app.example.com' },
+      data: { email: 'user@example.com', password: 'Password@123' },
+    });
+    expect(res.headers()['access-control-allow-origin']).toBeTruthy();
+  });
 });`,
 };
 
 const STATS = [
-  { label: "Total", value: 16 },
-  { label: "Manual", value: 3 },
-  { label: "API", value: 6 },
-  { label: "UI", value: 7 },
+  { label: "Total", value: 27 },
+  { label: "Manual", value: 2 },
+  { label: "UI", value: 12 },
+  { label: "API", value: 13 },
 ];
 
 type Integration = {
