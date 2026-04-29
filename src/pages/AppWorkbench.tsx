@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 
@@ -105,6 +105,25 @@ const STATS = [
   { label: "UI", value: 7 },
 ];
 
+type Integration = {
+  id: string;
+  name: string;
+  desc: string;
+  color: string;
+  letter: string;
+};
+
+const INTEGRATIONS: Integration[] = [
+  { id: "jira",       name: "Jira",          desc: "Pull tickets & acceptance criteria",  color: "#2684FF", letter: "J" },
+  { id: "azure",      name: "Azure DevOps",  desc: "Sync work items & test plans",        color: "#0078D4", letter: "A" },
+  { id: "github",     name: "GitHub",        desc: "Read issues, PRs & specs",            color: "#24292F", letter: "G" },
+  { id: "gitlab",     name: "GitLab",        desc: "Sync issues & merge requests",        color: "#FC6D26", letter: "G" },
+  { id: "confluence", name: "Confluence",    desc: "Import PRDs & design docs",           color: "#0052CC", letter: "C" },
+  { id: "notion",     name: "Notion",        desc: "Pull specs from Notion pages",        color: "#111827", letter: "N" },
+  { id: "linear",     name: "Linear",        desc: "Sync issues & cycles",                color: "#5E6AD2", letter: "L" },
+  { id: "slack",      name: "Slack",         desc: "Notify on test generation",           color: "#4A154B", letter: "S" },
+];
+
 export default function AppWorkbench() {
   const navigate = useNavigate();
   const [input, setInput] = useState(
@@ -114,6 +133,19 @@ export default function AppWorkbench() {
   const [generated, setGenerated] = useState(false);
   const [tab, setTab] = useState<Tab>("manual");
   const [copied, setCopied] = useState(false);
+  const [connected, setConnected] = useState<string[]>([]);
+  const [showIntegrations, setShowIntegrations] = useState(true);
+
+  function toggleConnection(id: string) {
+    setConnected((prev) => {
+      if (prev.includes(id)) {
+        toast.success(`Disconnected ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
+        return prev.filter((x) => x !== id);
+      }
+      toast.success(`Connected to ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
+      return [...prev, id];
+    });
+  }
 
   function handleGenerate() {
     if (!input.trim()) {
@@ -162,13 +194,102 @@ export default function AppWorkbench() {
               Paste a requirement, acceptance criteria, or user story. Our AI returns manual cases, Playwright UI scripts, and Playwright API scripts.
             </p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
-          >
-            <LogOut size={16} /> Sign out
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowIntegrations((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
+            >
+              <Link2 size={16} />
+              Integrations
+              {connected.length > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-primary-dark text-[11px] font-bold">
+                  {connected.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
+            >
+              <LogOut size={16} /> Sign out
+            </button>
+          </div>
         </div>
+
+        {showIntegrations && (
+          <div className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-card">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <div className="text-xs font-semibold tracking-widest text-muted-foreground">CONNECT YOUR TOOLS</div>
+                <h2 className="mt-1 font-display text-xl text-foreground">
+                  Ground tests in your real project context
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
+                  Connect Jira, Azure DevOps, GitHub and more so QAGen can pull live tickets, acceptance criteria and API contracts.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowIntegrations(false)}
+                className="text-muted-foreground hover:text-foreground p-1"
+                aria-label="Hide integrations"
+              >
+                <XIcon size={18} />
+              </button>
+            </div>
+
+            <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {INTEGRATIONS.map((it) => {
+                const isOn = connected.includes(it.id);
+                return (
+                  <button
+                    key={it.id}
+                    onClick={() => toggleConnection(it.id)}
+                    className={`group relative text-left rounded-xl border p-4 transition shadow-sm ${
+                      isOn
+                        ? "border-accent bg-accent/5 ring-1 ring-accent/40"
+                        : "border-border bg-card hover:border-accent/60 hover:bg-muted/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-9 w-9 rounded-lg grid place-items-center text-white font-bold text-sm shrink-0"
+                        style={{ backgroundColor: it.color }}
+                      >
+                        {it.letter}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm text-foreground truncate">{it.name}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{it.desc}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span
+                        className={`text-[11px] font-semibold uppercase tracking-wider ${
+                          isOn ? "text-accent" : "text-muted-foreground"
+                        }`}
+                      >
+                        {isOn ? "Connected" : "Not connected"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center justify-center h-5 w-5 rounded-full ${
+                          isOn ? "bg-accent text-primary-dark" : "border border-border text-muted-foreground"
+                        }`}
+                      >
+                        {isOn ? <Check size={12} /> : <Plug size={12} />}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="mt-4 text-xs text-muted-foreground">
+              {connected.length === 0
+                ? "Tip: you can also generate tests from raw text — connecting tools is optional."
+                : `${connected.length} integration${connected.length > 1 ? "s" : ""} connected — your generated tests will reference real tickets and contracts.`}
+            </p>
+          </div>
+        )}
 
         <div className="mt-8 grid lg:grid-cols-[5fr_7fr] gap-6">
           {/* INPUT */}
