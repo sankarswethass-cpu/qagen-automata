@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, Brain, Shield, Layers } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 
@@ -290,6 +290,17 @@ export default function AppWorkbench() {
   const [copied, setCopied] = useState(false);
   const [connected, setConnected] = useState<string[]>([]);
   const [showIntegrations, setShowIntegrations] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [agentIdx, setAgentIdx] = useState(0);
+
+  const AGENTS = [
+    { name: "Requirement Analyzer", icon: Brain,        desc: "Parsing user story & acceptance criteria" },
+    { name: "Coverage Planner",     icon: Layers,       desc: "Mapping happy / negative / edge / boundary scenarios" },
+    { name: "Manual Case Writer",   icon: ClipboardList,desc: "Drafting structured manual test cases" },
+    { name: "Playwright UI Agent",  icon: Monitor,      desc: "Generating end-to-end UI automation" },
+    { name: "Playwright API Agent", icon: Plug,         desc: "Generating API contract & integration tests" },
+    { name: "Security Reviewer",    icon: Shield,       desc: "Adding XSS, SQLi, rate-limit & auth checks" },
+  ];
 
   function toggleConnection(id: string) {
     setConnected((prev) => {
@@ -309,11 +320,26 @@ export default function AppWorkbench() {
     }
     setLoading(true);
     setGenerated(false);
-    setTimeout(() => {
-      setLoading(false);
-      setGenerated(true);
-      toast.success("Generated 16 test cases across 6 scenario types");
-    }, 1400);
+    setProgress(0);
+    setAgentIdx(0);
+    const total = AGENTS.length;
+    const stepMs = 550;
+    let i = 0;
+    const tick = () => {
+      i += 1;
+      setAgentIdx(Math.min(i, total - 1));
+      setProgress(Math.round((i / total) * 100));
+      if (i < total) {
+        setTimeout(tick, stepMs);
+      } else {
+        setTimeout(() => {
+          setLoading(false);
+          setGenerated(true);
+          toast.success("Generated 27 test cases across 6 scenario types");
+        }, 300);
+      }
+    };
+    setTimeout(tick, stepMs);
   }
 
   function handleCopy() {
@@ -323,6 +349,7 @@ export default function AppWorkbench() {
   }
 
   function handleLogout() {
+    localStorage.removeItem("qagen_auth");
     toast.success("Logged out");
     navigate("/");
   }
