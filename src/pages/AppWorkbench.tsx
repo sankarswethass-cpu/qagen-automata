@@ -582,12 +582,29 @@ export default function AppWorkbench() {
                 })}
               </div>
               {generated && (
-                <button
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground pb-2"
-                >
-                  {copied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
-                </button>
+                <div className="flex items-center gap-1 pb-2">
+                  <button
+                    onClick={handleDownloadWord}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Download as Word"
+                  >
+                    <FileText size={13} /> Word
+                  </button>
+                  <button
+                    onClick={handleDownloadPdf}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Download as PDF"
+                  >
+                    <FileDown size={13} /> PDF
+                  </button>
+                  <button
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? <><Check size={13} className="text-accent" /> Copied</> : <><Copy size={13} /> Copy</>}
+                  </button>
+                </div>
               )}
             </div>
 
