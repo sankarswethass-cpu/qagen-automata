@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, Brain, Shield, Layers } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, Brain, Shield, Layers, FileText, FileDown, Github } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 
@@ -269,14 +269,7 @@ type Integration = {
 };
 
 const INTEGRATIONS: Integration[] = [
-  { id: "jira",       name: "Jira",          desc: "Pull tickets & acceptance criteria",  color: "#2684FF", letter: "J" },
-  { id: "azure",      name: "Azure DevOps",  desc: "Sync work items & test plans",        color: "#0078D4", letter: "A" },
-  { id: "github",     name: "GitHub",        desc: "Read issues, PRs & specs",            color: "#24292F", letter: "G" },
-  { id: "gitlab",     name: "GitLab",        desc: "Sync issues & merge requests",        color: "#FC6D26", letter: "G" },
-  { id: "confluence", name: "Confluence",    desc: "Import PRDs & design docs",           color: "#0052CC", letter: "C" },
-  { id: "notion",     name: "Notion",        desc: "Pull specs from Notion pages",        color: "#111827", letter: "N" },
-  { id: "linear",     name: "Linear",        desc: "Sync issues & cycles",                color: "#5E6AD2", letter: "L" },
-  { id: "slack",      name: "Slack",         desc: "Notify on test generation",           color: "#4A154B", letter: "S" },
+  { id: "github", name: "GitHub", desc: "Connect a repo to ground tests in real code", color: "#24292F", letter: "G" },
 ];
 
 export default function AppWorkbench() {
@@ -292,6 +285,9 @@ export default function AppWorkbench() {
   const [showIntegrations, setShowIntegrations] = useState(true);
   const [progress, setProgress] = useState(0);
   const [agentIdx, setAgentIdx] = useState(0);
+  const [repoInput, setRepoInput] = useState("");
+  const [repoUrl, setRepoUrl] = useState("");
+  const [showRepoForm, setShowRepoForm] = useState(false);
 
   const AGENTS = [
     { name: "Requirement Analyzer", icon: Brain,        desc: "Parsing user story & acceptance criteria" },
@@ -302,15 +298,34 @@ export default function AppWorkbench() {
     { name: "Security Reviewer",    icon: Shield,       desc: "Adding XSS, SQLi, rate-limit & auth checks" },
   ];
 
-  function toggleConnection(id: string) {
-    setConnected((prev) => {
-      if (prev.includes(id)) {
-        toast.success(`Disconnected ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
-        return prev.filter((x) => x !== id);
-      }
-      toast.success(`Connected to ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
-      return [...prev, id];
-    });
+  function handleGithubClick() {
+    if (connected.includes("github")) {
+      setConnected([]);
+      setRepoUrl("");
+      setRepoInput("");
+      setShowRepoForm(false);
+      toast.success("Disconnected GitHub");
+      return;
+    }
+    setShowRepoForm(true);
+  }
+
+  function handleRepoSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const v = repoInput.trim();
+    if (!v) {
+      toast.error("Enter a GitHub repo (e.g. owner/repo or full URL)");
+      return;
+    }
+    const valid = /^[\w.-]+\/[\w.-]+$/.test(v) || /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+/.test(v);
+    if (!valid) {
+      toast.error("Invalid format. Use owner/repo or https://github.com/owner/repo");
+      return;
+    }
+    setRepoUrl(v);
+    setConnected(["github"]);
+    setShowRepoForm(false);
+    toast.success(`Connected GitHub repo: ${v}`);
   }
 
   function handleGenerate() {
@@ -346,6 +361,44 @@ export default function AppWorkbench() {
     navigator.clipboard.writeText(SAMPLE[tab]);
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
+    toast.success("Copied to clipboard");
+  }
+
+  function activeLabel() {
+    return tabs.find((t) => t.id === tab)?.label ?? "Test Cases";
+  }
+
+  function downloadBlob(content: string, filename: string, mime: string) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleDownloadWord() {
+    const title = `QAGen — ${activeLabel()}`;
+    const body = SAMPLE[tab].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${title}</title></head><body><h1>${title}</h1><pre style="font-family:Consolas,monospace;font-size:11pt;white-space:pre-wrap;">${body}</pre></body></html>`;
+    downloadBlob(html, `qagen-${tab}.doc`, "application/msword");
+    toast.success("Word document downloaded");
+  }
+
+  function handleDownloadPdf() {
+    const title = `QAGen — ${activeLabel()}`;
+    const body = SAMPLE[tab].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const w = window.open("", "_blank");
+    if (!w) {
+      toast.error("Popup blocked — allow popups to export PDF");
+      return;
+    }
+    w.document.write(`<html><head><title>${title}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:32px;color:#0f172a}h1{font-size:20px;margin:0 0 16px}pre{font-family:Consolas,monospace;font-size:11px;white-space:pre-wrap;line-height:1.5}</style></head><body><h1>${title}</h1><pre>${body}</pre><script>window.onload=()=>{window.print();}<\/script></body></html>`);
+    w.document.close();
+    toast.success("Opening print dialog — choose 'Save as PDF'");
   }
 
   function handleLogout() {
@@ -419,57 +472,65 @@ export default function AppWorkbench() {
               </button>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {INTEGRATIONS.map((it) => {
-                const isOn = connected.includes(it.id);
-                return (
+            <div className="mt-5">
+              <div
+                className={`rounded-xl border p-5 transition ${
+                  connected.includes("github")
+                    ? "border-accent bg-accent/5 ring-1 ring-accent/40"
+                    : "border-border bg-card"
+                }`}
+              >
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div
+                    className="h-11 w-11 rounded-lg grid place-items-center text-white shrink-0"
+                    style={{ backgroundColor: "#24292F" }}
+                  >
+                    <Github size={22} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-foreground">GitHub</div>
+                    <div className="text-xs text-muted-foreground">
+                      {connected.includes("github")
+                        ? `Connected to ${repoUrl}`
+                        : "Connect a repo so QAGen can ground tests in your codebase"}
+                    </div>
+                  </div>
                   <button
-                    key={it.id}
-                    onClick={() => toggleConnection(it.id)}
-                    className={`group relative text-left rounded-xl border p-4 transition shadow-sm ${
-                      isOn
-                        ? "border-accent bg-accent/5 ring-1 ring-accent/40"
-                        : "border-border bg-card hover:border-accent/60 hover:bg-muted/40"
+                    onClick={handleGithubClick}
+                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                      connected.includes("github")
+                        ? "border border-border bg-card text-foreground hover:bg-muted"
+                        : "bg-primary text-white hover:bg-primary-light"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="h-9 w-9 rounded-lg grid place-items-center text-white font-bold text-sm shrink-0"
-                        style={{ backgroundColor: it.color }}
-                      >
-                        {it.letter}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-semibold text-sm text-foreground truncate">{it.name}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">{it.desc}</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span
-                        className={`text-[11px] font-semibold uppercase tracking-wider ${
-                          isOn ? "text-accent" : "text-muted-foreground"
-                        }`}
-                      >
-                        {isOn ? "Connected" : "Not connected"}
-                      </span>
-                      <span
-                        className={`inline-flex items-center justify-center h-5 w-5 rounded-full ${
-                          isOn ? "bg-accent text-primary-dark" : "border border-border text-muted-foreground"
-                        }`}
-                      >
-                        {isOn ? <Check size={12} /> : <Plug size={12} />}
-                      </span>
-                    </div>
+                    {connected.includes("github") ? (
+                      <><XIcon size={14} /> Disconnect</>
+                    ) : (
+                      <><Plug size={14} /> Connect</>
+                    )}
                   </button>
-                );
-              })}
-            </div>
+                </div>
 
-            <p className="mt-4 text-xs text-muted-foreground">
-              {connected.length === 0
-                ? "Tip: you can also generate tests from raw text — connecting tools is optional."
-                : `${connected.length} integration${connected.length > 1 ? "s" : ""} connected — your generated tests will reference real tickets and contracts.`}
-            </p>
+                {showRepoForm && !connected.includes("github") && (
+                  <form onSubmit={handleRepoSubmit} className="mt-4 flex flex-col sm:flex-row gap-2">
+                    <input
+                      autoFocus
+                      type="text"
+                      value={repoInput}
+                      onChange={(e) => setRepoInput(e.target.value)}
+                      placeholder="owner/repo  or  https://github.com/owner/repo"
+                      className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                    />
+                    <button
+                      type="submit"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent text-primary-dark px-4 py-2 text-sm font-semibold hover:opacity-90"
+                    >
+                      <Check size={14} /> Link repo
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -521,12 +582,29 @@ export default function AppWorkbench() {
                 })}
               </div>
               {generated && (
-                <button
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground pb-2"
-                >
-                  {copied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
-                </button>
+                <div className="flex items-center gap-1 pb-2">
+                  <button
+                    onClick={handleDownloadWord}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Download as Word"
+                  >
+                    <FileText size={13} /> Word
+                  </button>
+                  <button
+                    onClick={handleDownloadPdf}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Download as PDF"
+                  >
+                    <FileDown size={13} /> PDF
+                  </button>
+                  <button
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? <><Check size={13} className="text-accent" /> Copied</> : <><Copy size={13} /> Copy</>}
+                  </button>
+                </div>
               )}
             </div>
 
