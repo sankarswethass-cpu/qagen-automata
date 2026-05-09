@@ -54,6 +54,7 @@ export default function Login() {
     setErrors(e);
     if (Object.keys(e).length === 0) {
       toast.success("Welcome back! Opening workbench…");
+      localStorage.setItem("qagen_auth", "1");
       ev.currentTarget.reset();
       setTimeout(() => navigate("/app"), 400);
     }
@@ -66,6 +67,7 @@ export default function Login() {
     setErrors(e);
     if (Object.keys(e).length === 0) {
       toast.success("Account created! Opening workbench…");
+      localStorage.setItem("qagen_auth", "1");
       ev.currentTarget.reset();
       setTimeout(() => navigate("/app"), 400);
     }
