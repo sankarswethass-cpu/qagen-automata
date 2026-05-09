@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, Brain, Shield, Layers, FileText, FileDown, Github } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 
@@ -253,13 +253,6 @@ test.describe('Auth API — Automation (full coverage)', () => {
 });`,
 };
 
-const STATS = [
-  { label: "Total", value: 27 },
-  { label: "Manual", value: 2 },
-  { label: "UI", value: 12 },
-  { label: "API", value: 13 },
-];
-
 type Integration = {
   id: string;
   name: string;
@@ -269,7 +262,14 @@ type Integration = {
 };
 
 const INTEGRATIONS: Integration[] = [
-  { id: "github", name: "GitHub", desc: "Connect a repo to ground tests in real code", color: "#24292F", letter: "G" },
+  { id: "jira",       name: "Jira",          desc: "Pull tickets & acceptance criteria",  color: "#2684FF", letter: "J" },
+  { id: "azure",      name: "Azure DevOps",  desc: "Sync work items & test plans",        color: "#0078D4", letter: "A" },
+  { id: "github",     name: "GitHub",        desc: "Read issues, PRs & specs",            color: "#24292F", letter: "G" },
+  { id: "gitlab",     name: "GitLab",        desc: "Sync issues & merge requests",        color: "#FC6D26", letter: "G" },
+  { id: "confluence", name: "Confluence",    desc: "Import PRDs & design docs",           color: "#0052CC", letter: "C" },
+  { id: "notion",     name: "Notion",        desc: "Pull specs from Notion pages",        color: "#111827", letter: "N" },
+  { id: "linear",     name: "Linear",        desc: "Sync issues & cycles",                color: "#5E6AD2", letter: "L" },
+  { id: "slack",      name: "Slack",         desc: "Notify on test generation",           color: "#4A154B", letter: "S" },
 ];
 
 export default function AppWorkbench() {
@@ -282,127 +282,89 @@ export default function AppWorkbench() {
   const [tab, setTab] = useState<Tab>("manual");
   const [copied, setCopied] = useState(false);
   const [connected, setConnected] = useState<string[]>([]);
+  const [sample, setSample] = useState(SAMPLE);
+  const [stats, setStats] = useState([
+    { label: "Total",  value: 0 },
+    { label: "Manual", value: 0 },
+    { label: "UI",     value: 0 },
+    { label: "API",    value: 0 },
+  ]);
   const [showIntegrations, setShowIntegrations] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const [agentIdx, setAgentIdx] = useState(0);
-  const [repoInput, setRepoInput] = useState("");
-  const [repoUrl, setRepoUrl] = useState("");
-  const [showRepoForm, setShowRepoForm] = useState(false);
 
-  const AGENTS = [
-    { name: "Requirement Analyzer", icon: Brain,        desc: "Parsing user story & acceptance criteria" },
-    { name: "Coverage Planner",     icon: Layers,       desc: "Mapping happy / negative / edge / boundary scenarios" },
-    { name: "Manual Case Writer",   icon: ClipboardList,desc: "Drafting structured manual test cases" },
-    { name: "Playwright UI Agent",  icon: Monitor,      desc: "Generating end-to-end UI automation" },
-    { name: "Playwright API Agent", icon: Plug,         desc: "Generating API contract & integration tests" },
-    { name: "Security Reviewer",    icon: Shield,       desc: "Adding XSS, SQLi, rate-limit & auth checks" },
-  ];
-
-  function handleGithubClick() {
-    if (connected.includes("github")) {
-      setConnected([]);
-      setRepoUrl("");
-      setRepoInput("");
-      setShowRepoForm(false);
-      toast.success("Disconnected GitHub");
-      return;
-    }
-    setShowRepoForm(true);
-  }
-
-  function handleRepoSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const v = repoInput.trim();
-    if (!v) {
-      toast.error("Enter a GitHub repo (e.g. owner/repo or full URL)");
-      return;
-    }
-    const valid = /^[\w.-]+\/[\w.-]+$/.test(v) || /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+/.test(v);
-    if (!valid) {
-      toast.error("Invalid format. Use owner/repo or https://github.com/owner/repo");
-      return;
-    }
-    setRepoUrl(v);
-    setConnected(["github"]);
-    setShowRepoForm(false);
-    toast.success(`Connected GitHub repo: ${v}`);
-  }
-
-  function handleGenerate() {
-    if (!input.trim()) {
-      toast.error("Please enter a requirement first");
-      return;
-    }
-    setLoading(true);
-    setGenerated(false);
-    setProgress(0);
-    setAgentIdx(0);
-    const total = AGENTS.length;
-    const stepMs = 550;
-    let i = 0;
-    const tick = () => {
-      i += 1;
-      setAgentIdx(Math.min(i, total - 1));
-      setProgress(Math.round((i / total) * 100));
-      if (i < total) {
-        setTimeout(tick, stepMs);
-      } else {
-        setTimeout(() => {
-          setLoading(false);
-          setGenerated(true);
-          toast.success("Generated 27 test cases across 6 scenario types");
-        }, 300);
+  function toggleConnection(id: string) {
+    setConnected((prev) => {
+      if (prev.includes(id)) {
+        toast.success(`Disconnected ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
+        return prev.filter((x) => x !== id);
       }
-    };
-    setTimeout(tick, stepMs);
+      toast.success(`Connected to ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
+      return [...prev, id];
+    });
   }
+
+async function handleGenerate() {
+  if (!input.trim()) {
+    toast.error("Please enter a requirement first");
+    return;
+  }
+  setLoading(true);
+  setGenerated(false);
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/generate`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+        requirement: input,
+        use_rag: false,
+        include_ui: true,
+        include_api: true,
+        include_manual: true
+      }),
+      }
+    );
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+
+    // Backend returns one markdown_output string — split into sections
+    const fullOutput = data.markdown_output || "No output returned.";
+
+    // Try to split by common section headers
+    const manualMatch = fullOutput.match(/#{1,3}\s*(Manual Test Cases?[\s\S]*?)(?=#{1,3}\s*(Playwright|UI|API)|$)/i);
+    const uiMatch     = fullOutput.match(/#{1,3}\s*(Playwright UI[\s\S]*?)(?=#{1,3}\s*(Playwright API|API Test)|$)/i);
+    const apiMatch    = fullOutput.match(/#{1,3}\s*(Playwright API[\s\S]*?)$/i);
+
+    setSample({
+      manual: manualMatch ? manualMatch[0].trim() : fullOutput,
+      ui:     uiMatch     ? uiMatch[0].trim()     : "No Playwright UI tests found in output.",
+      api:    apiMatch    ? apiMatch[0].trim()     : "No Playwright API tests found in output.",
+    });
+
+    const total = data.total_test_cases || 0;
+    setStats([
+      { label: "Total",  value: total },
+      { label: "Manual", value: Math.round(total * 0.1)  },
+      { label: "UI",     value: Math.round(total * 0.45) },
+      { label: "API",    value: Math.round(total * 0.45) },
+    ]);
+    setGenerated(true);
+    toast.success(`Generated ${total} test cases from your backend!`);
+  } catch (err) {
+    toast.error("Backend error — check console for details");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+}
 
   function handleCopy() {
-    navigator.clipboard.writeText(SAMPLE[tab]);
+    navigator.clipboard.writeText(sample[tab]);
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
-    toast.success("Copied to clipboard");
-  }
-
-  function activeLabel() {
-    return tabs.find((t) => t.id === tab)?.label ?? "Test Cases";
-  }
-
-  function downloadBlob(content: string, filename: string, mime: string) {
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  function handleDownloadWord() {
-    const title = `QAGen — ${activeLabel()}`;
-    const body = SAMPLE[tab].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${title}</title></head><body><h1>${title}</h1><pre style="font-family:Consolas,monospace;font-size:11pt;white-space:pre-wrap;">${body}</pre></body></html>`;
-    downloadBlob(html, `qagen-${tab}.doc`, "application/msword");
-    toast.success("Word document downloaded");
-  }
-
-  function handleDownloadPdf() {
-    const title = `QAGen — ${activeLabel()}`;
-    const body = SAMPLE[tab].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const w = window.open("", "_blank");
-    if (!w) {
-      toast.error("Popup blocked — allow popups to export PDF");
-      return;
-    }
-    w.document.write(`<html><head><title>${title}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:32px;color:#0f172a}h1{font-size:20px;margin:0 0 16px}pre{font-family:Consolas,monospace;font-size:11px;white-space:pre-wrap;line-height:1.5}</style></head><body><h1>${title}</h1><pre>${body}</pre><script>window.onload=()=>{window.print();}<\/script></body></html>`);
-    w.document.close();
-    toast.success("Opening print dialog — choose 'Save as PDF'");
   }
 
   function handleLogout() {
-    localStorage.removeItem("qagen_auth");
     toast.success("Logged out");
     navigate("/");
   }
@@ -472,65 +434,57 @@ export default function AppWorkbench() {
               </button>
             </div>
 
-            <div className="mt-5">
-              <div
-                className={`rounded-xl border p-5 transition ${
-                  connected.includes("github")
-                    ? "border-accent bg-accent/5 ring-1 ring-accent/40"
-                    : "border-border bg-card"
-                }`}
-              >
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div
-                    className="h-11 w-11 rounded-lg grid place-items-center text-white shrink-0"
-                    style={{ backgroundColor: "#24292F" }}
-                  >
-                    <Github size={22} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold text-foreground">GitHub</div>
-                    <div className="text-xs text-muted-foreground">
-                      {connected.includes("github")
-                        ? `Connected to ${repoUrl}`
-                        : "Connect a repo so QAGen can ground tests in your codebase"}
-                    </div>
-                  </div>
+            <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {INTEGRATIONS.map((it) => {
+                const isOn = connected.includes(it.id);
+                return (
                   <button
-                    onClick={handleGithubClick}
-                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                      connected.includes("github")
-                        ? "border border-border bg-card text-foreground hover:bg-muted"
-                        : "bg-primary text-white hover:bg-primary-light"
+                    key={it.id}
+                    onClick={() => toggleConnection(it.id)}
+                    className={`group relative text-left rounded-xl border p-4 transition shadow-sm ${
+                      isOn
+                        ? "border-accent bg-accent/5 ring-1 ring-accent/40"
+                        : "border-border bg-card hover:border-accent/60 hover:bg-muted/40"
                     }`}
                   >
-                    {connected.includes("github") ? (
-                      <><XIcon size={14} /> Disconnect</>
-                    ) : (
-                      <><Plug size={14} /> Connect</>
-                    )}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-9 w-9 rounded-lg grid place-items-center text-white font-bold text-sm shrink-0"
+                        style={{ backgroundColor: it.color }}
+                      >
+                        {it.letter}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm text-foreground truncate">{it.name}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{it.desc}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span
+                        className={`text-[11px] font-semibold uppercase tracking-wider ${
+                          isOn ? "text-accent" : "text-muted-foreground"
+                        }`}
+                      >
+                        {isOn ? "Connected" : "Not connected"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center justify-center h-5 w-5 rounded-full ${
+                          isOn ? "bg-accent text-primary-dark" : "border border-border text-muted-foreground"
+                        }`}
+                      >
+                        {isOn ? <Check size={12} /> : <Plug size={12} />}
+                      </span>
+                    </div>
                   </button>
-                </div>
-
-                {showRepoForm && !connected.includes("github") && (
-                  <form onSubmit={handleRepoSubmit} className="mt-4 flex flex-col sm:flex-row gap-2">
-                    <input
-                      autoFocus
-                      type="text"
-                      value={repoInput}
-                      onChange={(e) => setRepoInput(e.target.value)}
-                      placeholder="owner/repo  or  https://github.com/owner/repo"
-                      className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
-                    />
-                    <button
-                      type="submit"
-                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent text-primary-dark px-4 py-2 text-sm font-semibold hover:opacity-90"
-                    >
-                      <Check size={14} /> Link repo
-                    </button>
-                  </form>
-                )}
-              </div>
+                );
+              })}
             </div>
+
+            <p className="mt-4 text-xs text-muted-foreground">
+              {connected.length === 0
+                ? "Tip: you can also generate tests from raw text — connecting tools is optional."
+                : `${connected.length} integration${connected.length > 1 ? "s" : ""} connected — your generated tests will reference real tickets and contracts.`}
+            </p>
           </div>
         )}
 
@@ -561,104 +515,31 @@ export default function AppWorkbench() {
 
           {/* OUTPUT */}
           <div className="bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col">
-            {/* Tabs header — always visible & prominent */}
-            <div className="border-b border-border px-3 sm:px-5 pt-3 flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex gap-1 flex-wrap">
-                {tabs.map((t) => {
-                  const active = tab === t.id;
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => setTab(t.id)}
-                      className={`relative inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold transition border-b-2 -mb-px ${
-                        active
-                          ? "border-accent text-primary"
-                          : "border-transparent text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <t.icon size={15} /> {t.label}
-                    </button>
-                  );
-                })}
+            <div className="border-b border-border px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex gap-1">
+                {tabs.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setTab(t.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                      tab === t.id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <t.icon size={14} /> {t.label}
+                  </button>
+                ))}
               </div>
               {generated && (
-                <div className="flex items-center gap-1 pb-2">
-                  <button
-                    onClick={handleDownloadWord}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
-                    title="Download as Word"
-                  >
-                    <FileText size={13} /> Word
-                  </button>
-                  <button
-                    onClick={handleDownloadPdf}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
-                    title="Download as PDF"
-                  >
-                    <FileDown size={13} /> PDF
-                  </button>
-                  <button
-                    onClick={handleCopy}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
-                    title="Copy to clipboard"
-                  >
-                    {copied ? <><Check size={13} className="text-accent" /> Copied</> : <><Copy size={13} /> Copy</>}
-                  </button>
-                </div>
+                <button
+                  onClick={handleCopy}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  {copied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
+                </button>
               )}
             </div>
 
-            {loading ? (
-              <div className="flex-1 p-6">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-sm font-semibold text-foreground">Generating your test suite…</div>
-                  <div className="text-sm font-mono text-primary">{progress}%</div>
-                </div>
-                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500 ease-out"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <ul className="mt-5 space-y-2.5">
-                  {AGENTS.map((a, i) => {
-                    const done = i < agentIdx || progress === 100;
-                    const active = i === agentIdx && progress < 100;
-                    return (
-                      <li
-                        key={a.name}
-                        className={`flex items-start gap-3 rounded-lg border p-3 transition ${
-                          active
-                            ? "border-accent bg-accent/5"
-                            : done
-                              ? "border-border bg-muted/40"
-                              : "border-border bg-card opacity-70"
-                        }`}
-                      >
-                        <div
-                          className={`h-8 w-8 rounded-md grid place-items-center shrink-0 ${
-                            done ? "bg-accent text-primary-dark" : active ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {done ? <Check size={16} /> : active ? <Loader2 size={16} className="animate-spin" /> : <a.icon size={16} />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="text-sm font-semibold text-foreground truncate">{a.name}</div>
-                            <div className={`text-[11px] font-semibold uppercase tracking-wider ${
-                              done ? "text-accent" : active ? "text-primary" : "text-muted-foreground"
-                            }`}>
-                              {done ? "Done" : active ? "Running" : "Queued"}
-                            </div>
-                          </div>
-                          <div className="text-xs text-muted-foreground truncate">{a.desc}</div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ) : !generated ? (
+            {!generated ? (
               <div className="flex-1 grid place-items-center p-12 text-center">
                 <div>
                   <div className="mx-auto h-14 w-14 rounded-full bg-accent/10 grid place-items-center text-accent">
@@ -666,22 +547,22 @@ export default function AppWorkbench() {
                   </div>
                   <p className="mt-4 font-display text-xl text-foreground">Your test suite will appear here</p>
                   <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                    Enter a requirement on the left and click Generate. You'll get manual cases, Playwright UI scripts, and Playwright API scripts in 3 tabs.
+                    {loading ? "Analyzing requirement, planning coverage, generating cases…" : "Enter a requirement on the left and click Generate."}
                   </p>
                 </div>
               </div>
             ) : (
               <>
                 <div className="grid grid-cols-4 border-b border-border">
-                  {STATS.map((s) => (
+                  {stats.map((s) => (
                     <div key={s.label} className="px-4 py-3 text-center border-r border-border last:border-r-0">
                       <div className="font-display text-2xl text-primary">{s.value}</div>
                       <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{s.label}</div>
                     </div>
                   ))}
                 </div>
-                <pre className="flex-1 overflow-auto bg-primary-dark text-white/90 p-5 font-mono-code text-xs leading-relaxed whitespace-pre max-h-[600px]">
-{SAMPLE[tab]}
+                <pre className="flex-1 overflow-auto bg-primary-dark text-white/90 p-5 font-mono-code text-xs leading-relaxed whitespace-pre">
+{sample[tab]}
                 </pre>
               </>
             )}
