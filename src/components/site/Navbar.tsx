@@ -2,16 +2,20 @@ import { useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
-const links = [
+const baseLinks = [
   { to: "/", label: "Home" },
   { to: "/#features", label: "Features", hash: true },
   { to: "/#how", label: "How It Works", hash: true },
-  { to: "/login", label: "Login" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
+  const isAuthed =
+    typeof window !== "undefined" && localStorage.getItem("qagen_auth") === "1";
+  const links = isAuthed
+    ? [...baseLinks, { to: "/app", label: "Workbench" }]
+    : [...baseLinks, { to: "/login", label: "Login" }];
 
   return (
     <header className="sticky top-0 z-50 w-full">
