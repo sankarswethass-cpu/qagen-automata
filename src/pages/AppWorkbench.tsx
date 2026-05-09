@@ -500,31 +500,87 @@ export default function AppWorkbench() {
 
           {/* OUTPUT */}
           <div className="bg-card border border-border rounded-2xl shadow-card overflow-hidden flex flex-col">
-            <div className="border-b border-border px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex gap-1">
-                {tabs.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setTab(t.id)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                      tab === t.id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <t.icon size={14} /> {t.label}
-                  </button>
-                ))}
+            {/* Tabs header — always visible & prominent */}
+            <div className="border-b border-border px-3 sm:px-5 pt-3 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex gap-1 flex-wrap">
+                {tabs.map((t) => {
+                  const active = tab === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setTab(t.id)}
+                      className={`relative inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold transition border-b-2 -mb-px ${
+                        active
+                          ? "border-accent text-primary"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <t.icon size={15} /> {t.label}
+                    </button>
+                  );
+                })}
               </div>
               {generated && (
                 <button
                   onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground pb-2"
                 >
                   {copied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
                 </button>
               )}
             </div>
 
-            {!generated ? (
+            {loading ? (
+              <div className="flex-1 p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm font-semibold text-foreground">Generating your test suite…</div>
+                  <div className="text-sm font-mono text-primary">{progress}%</div>
+                </div>
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <ul className="mt-5 space-y-2.5">
+                  {AGENTS.map((a, i) => {
+                    const done = i < agentIdx || progress === 100;
+                    const active = i === agentIdx && progress < 100;
+                    return (
+                      <li
+                        key={a.name}
+                        className={`flex items-start gap-3 rounded-lg border p-3 transition ${
+                          active
+                            ? "border-accent bg-accent/5"
+                            : done
+                              ? "border-border bg-muted/40"
+                              : "border-border bg-card opacity-70"
+                        }`}
+                      >
+                        <div
+                          className={`h-8 w-8 rounded-md grid place-items-center shrink-0 ${
+                            done ? "bg-accent text-primary-dark" : active ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {done ? <Check size={16} /> : active ? <Loader2 size={16} className="animate-spin" /> : <a.icon size={16} />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-sm font-semibold text-foreground truncate">{a.name}</div>
+                            <div className={`text-[11px] font-semibold uppercase tracking-wider ${
+                              done ? "text-accent" : active ? "text-primary" : "text-muted-foreground"
+                            }`}>
+                              {done ? "Done" : active ? "Running" : "Queued"}
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground truncate">{a.desc}</div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : !generated ? (
               <div className="flex-1 grid place-items-center p-12 text-center">
                 <div>
                   <div className="mx-auto h-14 w-14 rounded-full bg-accent/10 grid place-items-center text-accent">
@@ -532,7 +588,7 @@ export default function AppWorkbench() {
                   </div>
                   <p className="mt-4 font-display text-xl text-foreground">Your test suite will appear here</p>
                   <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                    {loading ? "Analyzing requirement, planning coverage, generating cases…" : "Enter a requirement on the left and click Generate."}
+                    Enter a requirement on the left and click Generate. You'll get manual cases, Playwright UI scripts, and Playwright API scripts in 3 tabs.
                   </p>
                 </div>
               </div>
@@ -546,7 +602,7 @@ export default function AppWorkbench() {
                     </div>
                   ))}
                 </div>
-                <pre className="flex-1 overflow-auto bg-primary-dark text-white/90 p-5 font-mono-code text-xs leading-relaxed whitespace-pre">
+                <pre className="flex-1 overflow-auto bg-primary-dark text-white/90 p-5 font-mono-code text-xs leading-relaxed whitespace-pre max-h-[600px]">
 {SAMPLE[tab]}
                 </pre>
               </>
