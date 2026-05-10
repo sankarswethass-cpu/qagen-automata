@@ -642,17 +642,73 @@ async function handleGenerate() {
             </div>
 
             {!generated ? (
-              <div className="flex-1 grid place-items-center p-12 text-center">
-                <div>
-                  <div className="mx-auto h-14 w-14 rounded-full bg-accent/10 grid place-items-center text-accent">
-                    <Sparkles size={24} />
+              loading ? (
+                <div className="flex-1 p-8">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-semibold text-foreground">Generating test suite…</div>
+                    <div className="font-mono-code text-sm text-primary font-bold">{Math.round(progress)}%</div>
                   </div>
-                  <p className="mt-4 font-display text-xl text-foreground">Your test suite will appear here</p>
-                  <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                    {loading ? "Analyzing requirement, planning coverage, generating cases…" : "Enter a requirement on the left and click Generate."}
-                  </p>
+                  <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <ul className="mt-6 space-y-2">
+                    {AGENTS.map((a, i) => {
+                      const done = i < agentIdx;
+                      const active = i === agentIdx;
+                      const Icon = a.icon;
+                      return (
+                        <li
+                          key={a.name}
+                          className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition ${
+                            active
+                              ? "border-accent bg-accent/5"
+                              : done
+                              ? "border-border bg-muted/30"
+                              : "border-border bg-card"
+                          }`}
+                        >
+                          <div
+                            className={`h-7 w-7 rounded-md grid place-items-center shrink-0 ${
+                              done
+                                ? "bg-accent text-primary-dark"
+                                : active
+                                ? "bg-primary text-white"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {done ? (
+                              <Check size={14} />
+                            ) : active ? (
+                              <Loader2 size={14} className="animate-spin" />
+                            ) : (
+                              <Icon size={14} />
+                            )}
+                          </div>
+                          <div className="flex-1 text-sm font-medium text-foreground">{a.name}</div>
+                          <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
+                            {done ? "Done" : active ? "Running" : "Queued"}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-              </div>
+              ) : (
+                <div className="flex-1 grid place-items-center p-12 text-center">
+                  <div>
+                    <div className="mx-auto h-14 w-14 rounded-full bg-accent/10 grid place-items-center text-accent">
+                      <Sparkles size={24} />
+                    </div>
+                    <p className="mt-4 font-display text-xl text-foreground">Your test suite will appear here</p>
+                    <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                      Enter a requirement on the left and click Generate.
+                    </p>
+                  </div>
+                </div>
+              )
             ) : (
               <>
                 <div className="grid grid-cols-4 border-b border-border">
