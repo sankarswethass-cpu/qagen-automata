@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 
@@ -364,6 +364,44 @@ async function handleGenerate() {
     setTimeout(() => setCopied(false), 1600);
   }
 
+  function downloadBlob(content: string, filename: string, mime: string) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function handleDownloadMd() {
+    downloadBlob(sample[tab], `qagen-${tab}.md`, "text/markdown");
+    toast.success("Markdown downloaded");
+  }
+
+  function handleDownloadWord() {
+    const body = sample[tab]
+      .split("\n")
+      .map((l) => `<p>${l.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") || "&nbsp;"}</p>`)
+      .join("");
+    const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>QAGen ${tab}</title></head><body style="font-family:Calibri,Arial,sans-serif;font-size:11pt;">${body}</body></html>`;
+    downloadBlob(html, `qagen-${tab}.doc`, "application/msword");
+    toast.success("Word document downloaded");
+  }
+
+  function handleDownloadPdf() {
+    const w = window.open("", "_blank");
+    if (!w) {
+      toast.error("Popup blocked — allow popups to export PDF");
+      return;
+    }
+    const safe = sample[tab].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    w.document.write(`<html><head><title>QAGen ${tab}</title><style>body{font-family:-apple-system,Segoe UI,Arial,sans-serif;padding:32px;color:#111;font-size:12px;line-height:1.5;}pre{white-space:pre-wrap;word-wrap:break-word;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;}</style></head><body><pre>${safe}</pre><script>window.onload=()=>{setTimeout(()=>window.print(),200);}<\/script></body></html>`);
+    w.document.close();
+  }
+
   function handleLogout() {
     toast.success("Logged out");
     navigate("/");
@@ -530,12 +568,36 @@ async function handleGenerate() {
                 ))}
               </div>
               {generated && (
-                <button
-                  onClick={handleCopy}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
-                >
-                  {copied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleDownloadMd}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Download Markdown"
+                  >
+                    <FileCode size={14} /> .md
+                  </button>
+                  <button
+                    onClick={handleDownloadWord}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Download Word"
+                  >
+                    <FileText size={14} /> Word
+                  </button>
+                  <button
+                    onClick={handleDownloadPdf}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Download PDF"
+                  >
+                    <FileDown size={14} /> PDF
+                  </button>
+                  <button
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
+                  </button>
+                </div>
               )}
             </div>
 
