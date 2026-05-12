@@ -995,6 +995,81 @@ async function handleGenerate() {
             )}
           </div>
         </div>
+
+        {/* HISTORY & VISUALIZATION */}
+        <div className="mt-8 bg-card border border-border rounded-2xl shadow-card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <HistoryIcon size={16} className="text-muted-foreground" />
+              <h3 className="font-display text-lg text-foreground">Project History</h3>
+              <span className="text-xs text-muted-foreground">
+                · {projects.find((p) => p.id === currentProjectId)?.name}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              {showHistory ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {showHistory && (
+            <div className="p-5">
+              {/* Aggregate visualization */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                {(["Total", "Manual", "UI", "API"] as const).map((k) => {
+                  const max = Math.max(projectStats.Total || 1, 1);
+                  const v = projectStats[k] || 0;
+                  const pct = k === "Total" ? 100 : Math.round((v / max) * 100);
+                  return (
+                    <div key={k} className="rounded-xl border border-border bg-muted/30 p-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold uppercase tracking-wider text-muted-foreground">{k}</span>
+                        <BarChart3 size={12} className="text-muted-foreground" />
+                      </div>
+                      <div className="mt-1 font-display text-2xl text-primary">{v}</div>
+                      <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {projectHistory.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-8">
+                  No history yet. Generate test cases to start building history for this project.
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {projectHistory.map((h) => (
+                    <li key={h.id} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 hover:bg-muted/30 transition">
+                      <button onClick={() => loadHistoryEntry(h)} className="flex-1 text-left min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">{h.requirement}</div>
+                        <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span>{new Date(h.createdAt).toLocaleString()}</span>
+                          {h.stats.map((s) => (
+                            <span key={s.label}>
+                              <span className="font-semibold text-foreground">{s.value}</span> {s.label}
+                            </span>
+                          ))}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => deleteHistoryEntry(h.id)}
+                        className="shrink-0 text-muted-foreground hover:text-destructive p-1"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
