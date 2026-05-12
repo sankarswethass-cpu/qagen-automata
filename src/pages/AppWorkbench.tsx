@@ -265,6 +265,65 @@ const INTEGRATIONS: Integration[] = [
   { id: "github",     name: "GitHub",        desc: "Read issues, PRs & specs",            color: "#24292F", letter: "G" },
 ];
 
+// ---------- Requirement validation ----------
+type Validation =
+  | { state: "ok" }
+  | { state: "empty" }
+  | { state: "incomplete"; unclear: string[]; needed: string[]; example: string };
+
+function validateRequirement(text: string): Validation {
+  const t = text.trim();
+  if (!t) return { state: "empty" };
+  const words = t.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+  const detailRegex = /\b(when|given|then|should|must|api|endpoint|click|input|field|response|status|error|valid|invalid|redirect|return|expect)\b/i;
+  const hasDetail = detailRegex.test(t);
+  const hasActor = /\b(user|admin|guest|customer|system|client|service)\b/i.test(t);
+
+  if (wordCount < 12 || !hasDetail || !hasActor) {
+    const snippet = t.length > 140 ? t.slice(0, 140) + "…" : t;
+    return {
+      state: "incomplete",
+      unclear: [
+        `The requirement is too vague: "${snippet}" — it lacks specifics about the flow, inputs, and expected outcomes.`,
+        "No success criteria, inputs, outputs, or constraints are provided.",
+      ],
+      needed: [
+        "Who is the actor (user role, system, third-party)?",
+        "What inputs are involved and what are their validation rules?",
+        "What is the expected outcome on success (redirect, response, UI state)?",
+        "What should happen on failure, invalid input, or edge cases?",
+        "Any non-functional constraints (performance, security, permissions)?",
+      ],
+      example:
+        '"As a registered user, I want to log in with my username and password, and upon successful authentication, I should be redirected to a personalized dashboard showing my account summary and recent transactions."',
+    };
+  }
+  return { state: "ok" };
+}
+
+// ---------- Projects & history (localStorage) ----------
+type Project = { id: string; name: string; createdAt: number };
+type HistoryEntry = {
+  id: string;
+  projectId: string;
+  requirement: string;
+  createdAt: number;
+  stats: { label: string; value: number }[];
+  sample: { manual: string; ui: string; api: string };
+};
+
+const PROJECTS_KEY = "qagen_projects";
+const HISTORY_KEY = "qagen_history";
+const CURRENT_PROJECT_KEY = "qagen_current_project";
+
+function loadProjects(): Project[] {
+  try { return JSON.parse(localStorage.getItem(PROJECTS_KEY) || "[]"); } catch { return []; }
+}
+function loadHistory(): HistoryEntry[] {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; }
+}
+
 export default function AppWorkbench() {
   const navigate = useNavigate();
   const [input, setInput] = useState(
