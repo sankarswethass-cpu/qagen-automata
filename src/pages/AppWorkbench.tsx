@@ -347,6 +347,66 @@ export default function AppWorkbench() {
   const [showIntegrations, setShowIntegrations] = useState(true);
   const [progress, setProgress] = useState(0);
   const [agentIdx, setAgentIdx] = useState(0);
+  const [validation, setValidation] = useState<Validation>({ state: "ok" });
+
+  // Projects & history
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string>("");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(true);
+
+  useEffect(() => {
+    let p = loadProjects();
+    if (p.length === 0) {
+      p = [{ id: crypto.randomUUID(), name: "Default Project", createdAt: Date.now() }];
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(p));
+    }
+    setProjects(p);
+    const stored = localStorage.getItem(CURRENT_PROJECT_KEY);
+    setCurrentProjectId(stored && p.find((x) => x.id === stored) ? stored : p[0].id);
+    setHistory(loadHistory());
+  }, []);
+
+  useEffect(() => {
+    if (currentProjectId) localStorage.setItem(CURRENT_PROJECT_KEY, currentProjectId);
+  }, [currentProjectId]);
+
+  const projectHistory = useMemo(
+    () => history.filter((h) => h.projectId === currentProjectId).sort((a, b) => b.createdAt - a.createdAt),
+    [history, currentProjectId]
+  );
+
+  const projectStats = useMemo(() => {
+    const totals = { Total: 0, Manual: 0, UI: 0, API: 0 } as Record<string, number>;
+    projectHistory.forEach((h) => h.stats.forEach((s) => { totals[s.label] = (totals[s.label] || 0) + s.value; }));
+    return totals;
+  }, [projectHistory]);
+
+  function createProject() {
+    const name = window.prompt("Project name?")?.trim();
+    if (!name) return;
+    const np: Project = { id: crypto.randomUUID(), name, createdAt: Date.now() };
+    const next = [...projects, np];
+    setProjects(next);
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(next));
+    setCurrentProjectId(np.id);
+    toast.success(`Project "${name}" created`);
+  }
+
+  function deleteHistoryEntry(id: string) {
+    const next = history.filter((h) => h.id !== id);
+    setHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  }
+
+  function loadHistoryEntry(h: HistoryEntry) {
+    setInput(h.requirement);
+    setSample(h.sample);
+    setStats(h.stats);
+    setGenerated(true);
+    setValidation({ state: "ok" });
+    toast.success("Loaded from history");
+  }
 
   const AGENTS = [
     { name: "Requirement Analyzer", icon: Brain },
