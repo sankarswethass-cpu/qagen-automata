@@ -262,14 +262,7 @@ type Integration = {
 };
 
 const INTEGRATIONS: Integration[] = [
-  { id: "jira",       name: "Jira",          desc: "Pull tickets & acceptance criteria",  color: "#2684FF", letter: "J" },
-  { id: "azure",      name: "Azure DevOps",  desc: "Sync work items & test plans",        color: "#0078D4", letter: "A" },
   { id: "github",     name: "GitHub",        desc: "Read issues, PRs & specs",            color: "#24292F", letter: "G" },
-  { id: "gitlab",     name: "GitLab",        desc: "Sync issues & merge requests",        color: "#FC6D26", letter: "G" },
-  { id: "confluence", name: "Confluence",    desc: "Import PRDs & design docs",           color: "#0052CC", letter: "C" },
-  { id: "notion",     name: "Notion",        desc: "Pull specs from Notion pages",        color: "#111827", letter: "N" },
-  { id: "linear",     name: "Linear",        desc: "Sync issues & cycles",                color: "#5E6AD2", letter: "L" },
-  { id: "slack",      name: "Slack",         desc: "Notify on test generation",           color: "#4A154B", letter: "S" },
 ];
 
 export default function AppWorkbench() {
