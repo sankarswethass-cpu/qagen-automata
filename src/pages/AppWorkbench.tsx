@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, Code2 } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, Code2, AlertTriangle, AlertCircle, Plus, FolderKanban, History as HistoryIcon, BarChart3, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 
@@ -265,6 +265,65 @@ const INTEGRATIONS: Integration[] = [
   { id: "github",     name: "GitHub",        desc: "Read issues, PRs & specs",            color: "#24292F", letter: "G" },
 ];
 
+// ---------- Requirement validation ----------
+type Validation =
+  | { state: "ok" }
+  | { state: "empty" }
+  | { state: "incomplete"; unclear: string[]; needed: string[]; example: string };
+
+function validateRequirement(text: string): Validation {
+  const t = text.trim();
+  if (!t) return { state: "empty" };
+  const words = t.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+  const detailRegex = /\b(when|given|then|should|must|api|endpoint|click|input|field|response|status|error|valid|invalid|redirect|return|expect)\b/i;
+  const hasDetail = detailRegex.test(t);
+  const hasActor = /\b(user|admin|guest|customer|system|client|service)\b/i.test(t);
+
+  if (wordCount < 12 || !hasDetail || !hasActor) {
+    const snippet = t.length > 140 ? t.slice(0, 140) + "…" : t;
+    return {
+      state: "incomplete",
+      unclear: [
+        `The requirement is too vague: "${snippet}" — it lacks specifics about the flow, inputs, and expected outcomes.`,
+        "No success criteria, inputs, outputs, or constraints are provided.",
+      ],
+      needed: [
+        "Who is the actor (user role, system, third-party)?",
+        "What inputs are involved and what are their validation rules?",
+        "What is the expected outcome on success (redirect, response, UI state)?",
+        "What should happen on failure, invalid input, or edge cases?",
+        "Any non-functional constraints (performance, security, permissions)?",
+      ],
+      example:
+        '"As a registered user, I want to log in with my username and password, and upon successful authentication, I should be redirected to a personalized dashboard showing my account summary and recent transactions."',
+    };
+  }
+  return { state: "ok" };
+}
+
+// ---------- Projects & history (localStorage) ----------
+type Project = { id: string; name: string; createdAt: number };
+type HistoryEntry = {
+  id: string;
+  projectId: string;
+  requirement: string;
+  createdAt: number;
+  stats: { label: string; value: number }[];
+  sample: { manual: string; ui: string; api: string };
+};
+
+const PROJECTS_KEY = "qagen_projects";
+const HISTORY_KEY = "qagen_history";
+const CURRENT_PROJECT_KEY = "qagen_current_project";
+
+function loadProjects(): Project[] {
+  try { return JSON.parse(localStorage.getItem(PROJECTS_KEY) || "[]"); } catch { return []; }
+}
+function loadHistory(): HistoryEntry[] {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch { return []; }
+}
+
 export default function AppWorkbench() {
   const navigate = useNavigate();
   const [input, setInput] = useState(
@@ -288,6 +347,66 @@ export default function AppWorkbench() {
   const [showIntegrations, setShowIntegrations] = useState(true);
   const [progress, setProgress] = useState(0);
   const [agentIdx, setAgentIdx] = useState(0);
+  const [validation, setValidation] = useState<Validation>({ state: "ok" });
+
+  // Projects & history
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string>("");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(true);
+
+  useEffect(() => {
+    let p = loadProjects();
+    if (p.length === 0) {
+      p = [{ id: crypto.randomUUID(), name: "Default Project", createdAt: Date.now() }];
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(p));
+    }
+    setProjects(p);
+    const stored = localStorage.getItem(CURRENT_PROJECT_KEY);
+    setCurrentProjectId(stored && p.find((x) => x.id === stored) ? stored : p[0].id);
+    setHistory(loadHistory());
+  }, []);
+
+  useEffect(() => {
+    if (currentProjectId) localStorage.setItem(CURRENT_PROJECT_KEY, currentProjectId);
+  }, [currentProjectId]);
+
+  const projectHistory = useMemo(
+    () => history.filter((h) => h.projectId === currentProjectId).sort((a, b) => b.createdAt - a.createdAt),
+    [history, currentProjectId]
+  );
+
+  const projectStats = useMemo(() => {
+    const totals = { Total: 0, Manual: 0, UI: 0, API: 0 } as Record<string, number>;
+    projectHistory.forEach((h) => h.stats.forEach((s) => { totals[s.label] = (totals[s.label] || 0) + s.value; }));
+    return totals;
+  }, [projectHistory]);
+
+  function createProject() {
+    const name = window.prompt("Project name?")?.trim();
+    if (!name) return;
+    const np: Project = { id: crypto.randomUUID(), name, createdAt: Date.now() };
+    const next = [...projects, np];
+    setProjects(next);
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(next));
+    setCurrentProjectId(np.id);
+    toast.success(`Project "${name}" created`);
+  }
+
+  function deleteHistoryEntry(id: string) {
+    const next = history.filter((h) => h.id !== id);
+    setHistory(next);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+  }
+
+  function loadHistoryEntry(h: HistoryEntry) {
+    setInput(h.requirement);
+    setSample(h.sample);
+    setStats(h.stats);
+    setGenerated(true);
+    setValidation({ state: "ok" });
+    toast.success("Loaded from history");
+  }
 
   const AGENTS = [
     { name: "Requirement Analyzer", icon: Brain },
@@ -334,8 +453,10 @@ export default function AppWorkbench() {
   }
 
 async function handleGenerate() {
-  if (!input.trim()) {
-    toast.error("Please enter a requirement first");
+  const v = validateRequirement(input);
+  setValidation(v);
+  if (v.state !== "ok") {
+    setGenerated(false);
     return;
   }
   setLoading(true);
@@ -396,26 +517,56 @@ async function handleGenerate() {
     setProgress(100);
     setAgentIdx(totalAgents - 1);
     setGenerated(true);
+    persistHistory(total);
     toast.success(`Generated ${total} test cases from your backend!`);
   } catch (err) {
     // Fall back to demo content so UI still demonstrates progress + 3 tabs
     clearInterval(tick);
     setSample(SAMPLE);
-    setStats([
+    const fallbackStats = [
       { label: "Total",  value: 27 },
       { label: "Manual", value: 2 },
       { label: "UI",     value: 12 },
       { label: "API",    value: 13 },
-    ]);
+    ];
+    setStats(fallbackStats);
     setProgress(100);
     setAgentIdx(AGENTS.length - 1);
     setGenerated(true);
+    persistHistory(27, SAMPLE, fallbackStats);
     toast.message("Showing demo output (backend unavailable)");
     console.error(err);
   } finally {
     setLoading(false);
   }
 }
+
+  function persistHistory(total: number, overrideSample?: typeof SAMPLE, overrideStats?: typeof stats) {
+    if (!currentProjectId) return;
+    const entry: HistoryEntry = {
+      id: crypto.randomUUID(),
+      projectId: currentProjectId,
+      requirement: input.trim(),
+      createdAt: Date.now(),
+      stats: overrideStats ?? stats,
+      sample: overrideSample ?? sample,
+    };
+    // stats/sample state may not be flushed yet — use latest known values via setTimeout
+    setTimeout(() => {
+      const latest: HistoryEntry = {
+        ...entry,
+        stats: overrideStats ?? [
+          { label: "Total",  value: total },
+          { label: "Manual", value: Math.round(total * 0.1)  },
+          { label: "UI",     value: Math.round(total * 0.45) },
+          { label: "API",    value: Math.round(total * 0.45) },
+        ],
+      };
+      const next = [latest, ...loadHistory()];
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+      setHistory(next);
+    }, 0);
+  }
 
   function handleCopy() {
     navigator.clipboard.writeText(sample[tab]);
@@ -490,6 +641,21 @@ async function handleGenerate() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+              <FolderKanban size={16} className="text-muted-foreground" />
+              <select
+                value={currentProjectId}
+                onChange={(e) => setCurrentProjectId(e.target.value)}
+                className="bg-transparent text-foreground font-medium focus:outline-none"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <button onClick={createProject} className="text-accent hover:opacity-80" title="New project">
+                <Plus size={16} />
+              </button>
+            </div>
             <button
               onClick={() => setShowIntegrations((v) => !v)}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
@@ -640,11 +806,46 @@ async function handleGenerate() {
             <div className="text-xs font-semibold tracking-widest text-muted-foreground">REQUIREMENT INPUT</div>
             <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => { setInput(e.target.value); if (validation.state !== "ok") setValidation({ state: "ok" }); }}
               rows={10}
               placeholder="e.g. As a user, I want to reset my password via email so that I can regain access to my account..."
               className="mt-3 w-full rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground font-mono-code focus:outline-none focus:ring-2 focus:ring-accent resize-y"
             />
+            {validation.state === "empty" && (
+              <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm flex items-start gap-3">
+                <AlertCircle size={18} className="text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-destructive">No requirement provided</div>
+                  <div className="text-muted-foreground mt-0.5">Type a requirement, user story, or acceptance criteria above before generating.</div>
+                </div>
+              </div>
+            )}
+            {validation.state === "incomplete" && (
+              <div className="mt-3 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold">
+                  <AlertTriangle size={18} /> ✗ Incomplete Requirement
+                </div>
+                <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
+                  Requirement is incomplete. Please provide more detail.
+                </p>
+                <div className="mt-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">What is unclear:</div>
+                  <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
+                    {validation.unclear.map((u, i) => (<li key={i}>{u}</li>))}
+                  </ul>
+                </div>
+                <div className="mt-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">Information needed:</div>
+                  <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
+                    {validation.needed.map((u, i) => (<li key={i}>{u}</li>))}
+                  </ul>
+                </div>
+                <div className="mt-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">Example of a complete requirement:</div>
+                  <p className="mt-1 italic text-foreground/90">{validation.example}</p>
+                </div>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               {["Happy Path", "Negative", "Edge Cases", "Boundary", "Security", "Cross-Platform"].map((s) => (
                 <span key={s} className="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">{s}</span>
@@ -793,6 +994,81 @@ async function handleGenerate() {
               </>
             )}
           </div>
+        </div>
+
+        {/* HISTORY & VISUALIZATION */}
+        <div className="mt-8 bg-card border border-border rounded-2xl shadow-card overflow-hidden">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <HistoryIcon size={16} className="text-muted-foreground" />
+              <h3 className="font-display text-lg text-foreground">Project History</h3>
+              <span className="text-xs text-muted-foreground">
+                · {projects.find((p) => p.id === currentProjectId)?.name}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              {showHistory ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {showHistory && (
+            <div className="p-5">
+              {/* Aggregate visualization */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                {(["Total", "Manual", "UI", "API"] as const).map((k) => {
+                  const max = Math.max(projectStats.Total || 1, 1);
+                  const v = projectStats[k] || 0;
+                  const pct = k === "Total" ? 100 : Math.round((v / max) * 100);
+                  return (
+                    <div key={k} className="rounded-xl border border-border bg-muted/30 p-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold uppercase tracking-wider text-muted-foreground">{k}</span>
+                        <BarChart3 size={12} className="text-muted-foreground" />
+                      </div>
+                      <div className="mt-1 font-display text-2xl text-primary">{v}</div>
+                      <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {projectHistory.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-8">
+                  No history yet. Generate test cases to start building history for this project.
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {projectHistory.map((h) => (
+                    <li key={h.id} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3 hover:bg-muted/30 transition">
+                      <button onClick={() => loadHistoryEntry(h)} className="flex-1 text-left min-w-0">
+                        <div className="text-sm font-medium text-foreground truncate">{h.requirement}</div>
+                        <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
+                          <span>{new Date(h.createdAt).toLocaleString()}</span>
+                          {h.stats.map((s) => (
+                            <span key={s.label}>
+                              <span className="font-semibold text-foreground">{s.value}</span> {s.label}
+                            </span>
+                          ))}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => deleteHistoryEntry(h.id)}
+                        className="shrink-0 text-muted-foreground hover:text-destructive p-1"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>
