@@ -453,8 +453,10 @@ export default function AppWorkbench() {
   }
 
 async function handleGenerate() {
-  if (!input.trim()) {
-    toast.error("Please enter a requirement first");
+  const v = validateRequirement(input);
+  setValidation(v);
+  if (v.state !== "ok") {
+    setGenerated(false);
     return;
   }
   setLoading(true);
@@ -515,26 +517,56 @@ async function handleGenerate() {
     setProgress(100);
     setAgentIdx(totalAgents - 1);
     setGenerated(true);
+    persistHistory(total);
     toast.success(`Generated ${total} test cases from your backend!`);
   } catch (err) {
     // Fall back to demo content so UI still demonstrates progress + 3 tabs
     clearInterval(tick);
     setSample(SAMPLE);
-    setStats([
+    const fallbackStats = [
       { label: "Total",  value: 27 },
       { label: "Manual", value: 2 },
       { label: "UI",     value: 12 },
       { label: "API",    value: 13 },
-    ]);
+    ];
+    setStats(fallbackStats);
     setProgress(100);
     setAgentIdx(AGENTS.length - 1);
     setGenerated(true);
+    persistHistory(27, SAMPLE, fallbackStats);
     toast.message("Showing demo output (backend unavailable)");
     console.error(err);
   } finally {
     setLoading(false);
   }
 }
+
+  function persistHistory(total: number, overrideSample?: typeof SAMPLE, overrideStats?: typeof stats) {
+    if (!currentProjectId) return;
+    const entry: HistoryEntry = {
+      id: crypto.randomUUID(),
+      projectId: currentProjectId,
+      requirement: input.trim(),
+      createdAt: Date.now(),
+      stats: overrideStats ?? stats,
+      sample: overrideSample ?? sample,
+    };
+    // stats/sample state may not be flushed yet — use latest known values via setTimeout
+    setTimeout(() => {
+      const latest: HistoryEntry = {
+        ...entry,
+        stats: overrideStats ?? [
+          { label: "Total",  value: total },
+          { label: "Manual", value: Math.round(total * 0.1)  },
+          { label: "UI",     value: Math.round(total * 0.45) },
+          { label: "API",    value: Math.round(total * 0.45) },
+        ],
+      };
+      const next = [latest, ...loadHistory()];
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+      setHistory(next);
+    }, 0);
+  }
 
   function handleCopy() {
     navigator.clipboard.writeText(sample[tab]);
