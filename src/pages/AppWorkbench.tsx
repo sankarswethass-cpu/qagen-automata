@@ -641,6 +641,21 @@ async function handleGenerate() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+              <FolderKanban size={16} className="text-muted-foreground" />
+              <select
+                value={currentProjectId}
+                onChange={(e) => setCurrentProjectId(e.target.value)}
+                className="bg-transparent text-foreground font-medium focus:outline-none"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <button onClick={createProject} className="text-accent hover:opacity-80" title="New project">
+                <Plus size={16} />
+              </button>
+            </div>
             <button
               onClick={() => setShowIntegrations((v) => !v)}
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
