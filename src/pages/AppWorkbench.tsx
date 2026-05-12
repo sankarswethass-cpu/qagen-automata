@@ -578,6 +578,54 @@ async function handleGenerate() {
               })}
             </div>
 
+            {showRepoInput && (
+              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+                <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  GitHub repository URL
+                </label>
+                <div className="mt-2 flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    autoFocus
+                    value={repoDraft}
+                    onChange={(e) => setRepoDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitRepo()}
+                    placeholder="https://github.com/owner/repo"
+                    className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <button
+                    onClick={submitRepo}
+                    className="rounded-lg bg-accent text-primary-dark px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+                  >
+                    Connect
+                  </button>
+                  <button
+                    onClick={() => setShowRepoInput(false)}
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {connected.includes("github") && repoUrl && !showRepoInput && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/5 p-3 text-sm">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Connected repo</div>
+                  <a href={repoUrl} target="_blank" rel="noreferrer" className="block truncate font-medium text-foreground hover:underline">
+                    {repoUrl}
+                  </a>
+                </div>
+                <button
+                  onClick={() => { setRepoDraft(repoUrl); setShowRepoInput(true); }}
+                  className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                >
+                  Change
+                </button>
+              </div>
+            )}
+
             <p className="mt-4 text-xs text-muted-foreground">
               {connected.length === 0
                 ? "Tip: you can also generate tests from raw text — connecting tools is optional."
