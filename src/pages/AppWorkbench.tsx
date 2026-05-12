@@ -791,11 +791,46 @@ async function handleGenerate() {
             <div className="text-xs font-semibold tracking-widest text-muted-foreground">REQUIREMENT INPUT</div>
             <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => { setInput(e.target.value); if (validation.state !== "ok") setValidation({ state: "ok" }); }}
               rows={10}
               placeholder="e.g. As a user, I want to reset my password via email so that I can regain access to my account..."
               className="mt-3 w-full rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground font-mono-code focus:outline-none focus:ring-2 focus:ring-accent resize-y"
             />
+            {validation.state === "empty" && (
+              <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm flex items-start gap-3">
+                <AlertCircle size={18} className="text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-destructive">No requirement provided</div>
+                  <div className="text-muted-foreground mt-0.5">Type a requirement, user story, or acceptance criteria above before generating.</div>
+                </div>
+              </div>
+            )}
+            {validation.state === "incomplete" && (
+              <div className="mt-3 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold">
+                  <AlertTriangle size={18} /> ✗ Incomplete Requirement
+                </div>
+                <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
+                  Requirement is incomplete. Please provide more detail.
+                </p>
+                <div className="mt-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">What is unclear:</div>
+                  <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
+                    {validation.unclear.map((u, i) => (<li key={i}>{u}</li>))}
+                  </ul>
+                </div>
+                <div className="mt-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">Information needed:</div>
+                  <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
+                    {validation.needed.map((u, i) => (<li key={i}>{u}</li>))}
+                  </ul>
+                </div>
+                <div className="mt-3">
+                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">Example of a complete requirement:</div>
+                  <p className="mt-1 italic text-foreground/90">{validation.example}</p>
+                </div>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               {["Happy Path", "Negative", "Edge Cases", "Boundary", "Security", "Cross-Platform"].map((s) => (
                 <span key={s} className="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">{s}</span>
