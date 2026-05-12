@@ -275,6 +275,9 @@ export default function AppWorkbench() {
   const [tab, setTab] = useState<Tab>("manual");
   const [copied, setCopied] = useState(false);
   const [connected, setConnected] = useState<string[]>([]);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [showRepoInput, setShowRepoInput] = useState(false);
+  const [repoDraft, setRepoDraft] = useState("");
   const [sample, setSample] = useState(SAMPLE);
   const [stats, setStats] = useState([
     { label: "Total",  value: 0 },
@@ -296,6 +299,18 @@ export default function AppWorkbench() {
   ];
 
   function toggleConnection(id: string) {
+    if (id === "github") {
+      if (connected.includes("github")) {
+        setConnected((prev) => prev.filter((x) => x !== "github"));
+        setRepoUrl("");
+        setShowRepoInput(false);
+        toast.success("Disconnected GitHub");
+        return;
+      }
+      setRepoDraft(repoUrl);
+      setShowRepoInput(true);
+      return;
+    }
     setConnected((prev) => {
       if (prev.includes(id)) {
         toast.success(`Disconnected ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
@@ -304,6 +319,18 @@ export default function AppWorkbench() {
       toast.success(`Connected to ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
       return [...prev, id];
     });
+  }
+
+  function submitRepo() {
+    const url = repoDraft.trim();
+    if (!/^https?:\/\/(www\.)?github\.com\/[^/\s]+\/[^/\s]+/.test(url)) {
+      toast.error("Enter a valid GitHub repo URL (https://github.com/owner/repo)");
+      return;
+    }
+    setRepoUrl(url);
+    setConnected((prev) => (prev.includes("github") ? prev : [...prev, "github"]));
+    setShowRepoInput(false);
+    toast.success("Connected to GitHub");
   }
 
 async function handleGenerate() {
