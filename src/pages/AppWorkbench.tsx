@@ -326,9 +326,7 @@ function loadHistory(): HistoryEntry[] {
 
 export default function AppWorkbench() {
   const navigate = useNavigate();
-  const [input, setInput] = useState(
-    "User should be able to log in with valid credentials. System must reject invalid passwords and log failed attempts."
-  );
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [tab, setTab] = useState<Tab>("manual");
