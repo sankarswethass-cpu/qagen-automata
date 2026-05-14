@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, Code2, AlertTriangle, AlertCircle, Plus, FolderKanban, History as HistoryIcon, BarChart3, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
+import SEO from "@/components/site/SEO";
 
 type Tab = "manual" | "ui" | "api";
 
@@ -624,6 +625,11 @@ async function handleGenerate() {
 
   return (
     <div className="min-h-screen bg-surface-light flex flex-col">
+      <SEO
+        title="Workbench — Generate Test Cases | QAGen AI"
+        description="QAGen AI workbench: turn requirements into manual test cases plus Playwright UI and API automation, with project history and validation."
+        path="/app"
+      />
       <Navbar />
       <main className="flex-1 container py-10">
         <div className="flex items-start justify-between gap-4 flex-wrap">

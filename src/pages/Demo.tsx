@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Check, Calendar, Clock, Video } from "lucide-react";
 import PageShell from "@/components/site/PageShell";
+import SEO from "@/components/site/SEO";
 
 type Errors = Record<string, string>;
 const teams = ["Just me", "2–10 people", "11–50 people", "51–200 people", "200+ people"];
@@ -31,6 +32,11 @@ export default function Demo() {
 
   return (
     <PageShell>
+      <SEO
+        title="Request a Live Demo — QAGen AI"
+        description="Book a personalised 30-minute QAGen AI demo. See how teams turn requirements into Playwright UI and API tests in seconds."
+        path="/demo"
+      />
       <section className="mesh-bg py-16 lg:py-24">
         <div className="container grid lg:grid-cols-[60fr_40fr] gap-10 items-start">
           {/* LEFT */}
