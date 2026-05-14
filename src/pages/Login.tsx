@@ -24,7 +24,8 @@ type FieldErrors = Record<string, string>;
 
 export default function Login() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"login" | "signup">("login");
+  const hasSignedUp = typeof window !== "undefined" && localStorage.getItem("qagen_signed_up") === "1";
+  const [tab, setTab] = useState<"login" | "signup">(hasSignedUp ? "login" : "signup");
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -53,6 +54,11 @@ export default function Login() {
     const e = validate(data, ["email", "password"]);
     setErrors(e);
     if (Object.keys(e).length === 0) {
+      if (localStorage.getItem("qagen_signed_up") !== "1") {
+        toast.error("Please sign up first to create an account.");
+        setTab("signup");
+        return;
+      }
       toast.success("Welcome back! Opening workbench…");
       localStorage.setItem("qagen_auth", "1");
       ev.currentTarget.reset();
@@ -66,10 +72,11 @@ export default function Login() {
     const e = validate(data, ["name", "email", "company", "password", "confirm"]);
     setErrors(e);
     if (Object.keys(e).length === 0) {
-      toast.success("Account created! Opening workbench…");
-      localStorage.setItem("qagen_auth", "1");
+      toast.success("Account created! Please sign in to continue.");
+      localStorage.setItem("qagen_signed_up", "1");
       ev.currentTarget.reset();
-      setTimeout(() => navigate("/app"), 400);
+      setErrors({});
+      setTab("login");
     }
   }
 
