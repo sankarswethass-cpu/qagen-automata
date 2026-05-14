@@ -31,6 +31,11 @@ export default function Demo() {
 
   return (
     <PageShell>
+      <SEO
+        title="Request a Live Demo — QAGen AI"
+        description="Book a personalised 30-minute QAGen AI demo. See how teams turn requirements into Playwright UI and API tests in seconds."
+        path="/demo"
+      />
       <section className="mesh-bg py-16 lg:py-24">
         <div className="container grid lg:grid-cols-[60fr_40fr] gap-10 items-start">
           {/* LEFT */}
