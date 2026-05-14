@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Check, Calendar, Clock, Video } from "lucide-react";
 import PageShell from "@/components/site/PageShell";
+import SEO from "@/components/site/SEO";
 
 type Errors = Record<string, string>;
 const teams = ["Just me", "2–10 people", "11–50 people", "51–200 people", "200+ people"];
