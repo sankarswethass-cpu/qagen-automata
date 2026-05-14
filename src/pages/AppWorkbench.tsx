@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, Code2, AlertTriangle, AlertCircle, Plus, FolderKanban, History as HistoryIcon, BarChart3, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
+import SEO from "@/components/site/SEO";
 
 type Tab = "manual" | "ui" | "api";
 
