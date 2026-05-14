@@ -624,6 +624,11 @@ async function handleGenerate() {
 
   return (
     <div className="min-h-screen bg-surface-light flex flex-col">
+      <SEO
+        title="Workbench — Generate Test Cases | QAGen AI"
+        description="QAGen AI workbench: turn requirements into manual test cases plus Playwright UI and API automation, with project history and validation."
+        path="/app"
+      />
       <Navbar />
       <main className="flex-1 container py-10">
         <div className="flex items-start justify-between gap-4 flex-wrap">
