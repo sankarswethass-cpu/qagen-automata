@@ -271,6 +271,7 @@ const INTEGRATIONS: Integration[] = [
 type Validation =
   | { state: "ok" }
   | { state: "empty" }
+  | { state: "mismatch" }
   | { state: "incomplete"; unclear: string[]; needed: string[]; example: string };
 
 function validateRequirement(text: string): Validation {
@@ -486,6 +487,30 @@ async function handleGenerate() {
     setGenerated(false);
     return;
   }
+
+  // Cross-check requirement against connected GitHub repo
+  if (connected.includes("github") && repoUrl) {
+    const match = repoUrl.match(/github\.com\/([^/\s]+)\/([^/\s#?]+)/i);
+    if (match) {
+      const owner = match[1].toLowerCase();
+      const repo = match[2].replace(/\.git$/i, "").toLowerCase();
+      const tokens = Array.from(
+        new Set(
+          [owner, repo, ...repo.split(/[-_./]+/), ...owner.split(/[-_./]+/)]
+            .map((t) => t.trim())
+            .filter((t) => t.length >= 3)
+        )
+      );
+      const text = input.toLowerCase();
+      const hit = tokens.some((t) => text.includes(t));
+      if (!hit) {
+        setValidation({ state: "mismatch" });
+        setGenerated(false);
+        return;
+      }
+    }
+  }
+
   setLoading(true);
   setGenerated(false);
   setProgress(0);
