@@ -1,11 +1,11 @@
-const tools = ["Jira", "Confluence", "Notion", "Playwright", "GitHub", "GitLab", "OpenAPI"];
+const tools = ["GitHub", "Website"];
 
 export default function Integrations() {
   return (
     <section className="bg-surface-light py-20">
       <div className="container text-center">
         <h2 className="font-display text-3xl md:text-5xl text-foreground tracking-tight">
-          Works Where Your Team Already Works
+          Connect Your Source
         </h2>
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           {tools.map((t) => (
@@ -15,7 +15,7 @@ export default function Integrations() {
           ))}
         </div>
         <p className="mt-8 text-muted-foreground max-w-2xl mx-auto">
-          Tool calling pulls live tickets, API contracts, and DB schemas — so every test case is grounded in your actual project context, not generic assumptions.
+          Point QAGen at a GitHub repository or a live website — every test case is grounded in your actual project context, not generic assumptions.
         </p>
       </div>
     </section>

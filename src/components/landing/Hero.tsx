@@ -52,8 +52,8 @@ export default function Hero() {
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
             className="mt-9 flex flex-wrap items-center gap-5"
           >
-            <Link to="/demo" className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3.5 font-semibold text-primary-dark shadow-glow hover:scale-[1.04] transition-transform">
-              Request a Demo →
+            <Link to="/login" className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3.5 font-semibold text-primary-dark shadow-glow hover:scale-[1.04] transition-transform">
+              Get Started →
             </Link>
             <a href="#output" className="text-white/85 hover:text-accent underline-offset-4 hover:underline">See example output ↓</a>
           </motion.div>
