@@ -824,6 +824,54 @@ async function handleGenerate() {
               </div>
             )}
 
+            {showSiteInput && (
+              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+                <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  Website URL
+                </label>
+                <div className="mt-2 flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    autoFocus
+                    value={siteDraft}
+                    onChange={(e) => setSiteDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitSite()}
+                    placeholder="https://example.com"
+                    className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <button
+                    onClick={submitSite}
+                    className="rounded-lg bg-accent text-primary-dark px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+                  >
+                    Connect
+                  </button>
+                  <button
+                    onClick={() => setShowSiteInput(false)}
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {connected.includes("website") && siteUrl && !showSiteInput && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/5 p-3 text-sm">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Connected website</div>
+                  <a href={siteUrl} target="_blank" rel="noreferrer" className="block truncate font-medium text-foreground hover:underline">
+                    {siteUrl}
+                  </a>
+                </div>
+                <button
+                  onClick={() => { setSiteDraft(siteUrl); setShowSiteInput(true); }}
+                  className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                >
+                  Change
+                </button>
+              </div>
+            )}
+
             <p className="mt-4 text-xs text-muted-foreground">
               {connected.length === 0
                 ? "Tip: you can also generate tests from raw text — connecting tools is optional."
