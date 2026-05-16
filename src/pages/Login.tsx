@@ -77,14 +77,14 @@ export default function Login() {
     const e = validate(data, ["name", "email", "company", "password", "confirm"]);
     setErrors(e);
     if (Object.keys(e).length === 0) {
-      toast.success("Account created! Please sign in to continue.");
       localStorage.setItem("qagen_signed_up", "1");
       localStorage.setItem("qagen_email", String(data.get("email") || "").trim());
       localStorage.setItem("qagen_name", String(data.get("name") || "").trim());
+      localStorage.setItem("qagen_auth", "1");
+      toast.success("Account created! Opening workbench…");
       ev.currentTarget.reset();
       setErrors({});
-      // Force re-render to switch to login view
-      window.location.reload();
+      setTimeout(() => navigate("/app"), 400);
     }
   }
 
