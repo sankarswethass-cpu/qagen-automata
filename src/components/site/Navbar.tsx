@@ -13,7 +13,11 @@ export default function Navbar() {
     typeof window !== "undefined" && localStorage.getItem("qagen_auth") === "1";
   const links = isAuthed
     ? [...baseLinks, { to: "/app", label: "Workbench" }]
-    : [...baseLinks, { to: "/login", label: "Login" }];
+    : [
+        ...baseLinks,
+        { to: "/login", label: "Login" },
+        { to: "/login?mode=signup", label: "Sign Up" },
+      ];
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -37,14 +41,6 @@ export default function Navbar() {
                   {l.label}
                 </NavLink>
             ))}
-            {!isAuthed && (
-              <Link
-                to="/login"
-                className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-primary-dark hover:scale-[1.03] transition-transform shadow-glow"
-              >
-                Get Started →
-              </Link>
-            )}
           </div>
 
           <button
