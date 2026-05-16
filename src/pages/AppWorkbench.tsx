@@ -714,7 +714,7 @@ async function handleGenerate() {
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
-              <button onClick={createProject} className="text-accent hover:opacity-80" title="New project">
+              <button onClick={() => setShowNewProject(true)} className="text-accent hover:opacity-80" title="New project">
                 <Plus size={16} />
               </button>
             </div>
