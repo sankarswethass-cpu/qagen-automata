@@ -356,6 +356,8 @@ export default function AppWorkbench() {
   // Projects & history
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentProjectId, setCurrentProjectId] = useState<string>("");
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(true);
 
@@ -387,7 +389,7 @@ export default function AppWorkbench() {
   }, [projectHistory]);
 
   function createProject() {
-    const name = window.prompt("Project name?")?.trim();
+    const name = newProjectName.trim();
     if (!name) return;
     const np: Project = { id: crypto.randomUUID(), name, createdAt: Date.now() };
     const next = [...projects, np];
@@ -395,6 +397,8 @@ export default function AppWorkbench() {
     localStorage.setItem(PROJECTS_KEY, JSON.stringify(next));
     setCurrentProjectId(np.id);
     toast.success(`Project "${name}" created`);
+    setNewProjectName("");
+    setShowNewProject(false);
   }
 
   function deleteHistoryEntry(id: string) {
