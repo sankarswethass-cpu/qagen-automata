@@ -149,8 +149,6 @@ export default function Login() {
                   <a href="#" className="text-sm font-medium text-accent hover:underline">Forgot Password?</a>
                 </div>
                 <button type="submit" className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors">Sign In</button>
-                <Divider />
-                <GoogleButton />
               </form>
             ) : (
               <form onSubmit={handleSignup} className="mt-6 space-y-4" noValidate>
@@ -178,8 +176,6 @@ export default function Login() {
                   {errors.confirm && <p className="mt-1 text-xs text-destructive">{errors.confirm}</p>}
                 </div>
                 <button type="submit" className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors">Create Account</button>
-                <Divider />
-                <GoogleButton />
                 <p className="text-xs text-center text-muted-foreground">By creating an account, you agree to our <a href="#" className="underline">Terms of Service</a> and <a href="#" className="underline">Privacy Policy</a>.</p>
               </form>
             )}
@@ -206,16 +202,5 @@ function Field({ label, name, type = "text", placeholder, errors, inputClass }: 
       <input name={name} type={type} placeholder={placeholder} className={inputClass(name) + " mt-1"} />
       {errors[name] && <p className="mt-1 text-xs text-destructive">{errors[name]}</p>}
     </div>
-  );
-}
-function Divider() {
-  return <div className="flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>;
-}
-function GoogleButton() {
-  return (
-    <button type="button" className="w-full rounded-lg border border-border bg-card py-2.5 font-medium text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35.5 24 35.5c-6.4 0-11.5-5.1-11.5-11.5S17.6 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.6 6.1 29 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.6 6.1 29 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5 0 9.5-1.9 12.9-5l-6-5.1c-2 1.4-4.4 2.1-6.9 2.1-5.3 0-9.7-3.1-11.3-7.5l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6 5.1c-.4.4 6.5-4.7 6.5-14.7 0-1.2-.1-2.3-.4-3.5z"/></svg>
-      Continue with Google
-    </button>
   );
 }
