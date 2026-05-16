@@ -4,8 +4,6 @@ import { Menu, X } from "lucide-react";
 
 const baseLinks = [
   { to: "/", label: "Home" },
-  { to: "/#features", label: "Features", hash: true },
-  { to: "/#how", label: "How It Works", hash: true },
 ];
 
 export default function Navbar() {
@@ -43,12 +41,14 @@ export default function Navbar() {
                 </NavLink>
               )
             )}
-            <Link
-              to="/demo"
-              className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-primary-dark hover:scale-[1.03] transition-transform shadow-glow"
-            >
-              Request a Demo →
-            </Link>
+            {!isAuthed && (
+              <Link
+                to="/login"
+                className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-primary-dark hover:scale-[1.03] transition-transform shadow-glow"
+              >
+                Get Started →
+              </Link>
+            )}
           </div>
 
           <button
@@ -69,9 +69,11 @@ export default function Navbar() {
                 <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className={`block py-2 ${loc.pathname === l.to ? "text-accent" : "text-white/85"}`}>{l.label}</Link>
               )
             )}
-            <Link to="/demo" onClick={() => setOpen(false)} className="block text-center mt-3 rounded-lg bg-accent py-2.5 font-semibold text-primary-dark">
-              Request a Demo →
-            </Link>
+            {!isAuthed && (
+              <Link to="/login" onClick={() => setOpen(false)} className="block text-center mt-3 rounded-lg bg-accent py-2.5 font-semibold text-primary-dark">
+                Get Started →
+              </Link>
+            )}
           </div>
         )}
       </div>
