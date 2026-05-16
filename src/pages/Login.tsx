@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Eye, EyeOff, Zap, Search, Lock, Link2, FileCode, BarChart3, Clock, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
@@ -24,8 +24,12 @@ type FieldErrors = Record<string, string>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const forcedMode = params.get("mode");
   const hasSignedUp = typeof window !== "undefined" && localStorage.getItem("qagen_signed_up") === "1";
-  const mode: "login" | "signup" = hasSignedUp ? "login" : "signup";
+  const mode: "login" | "signup" =
+    forcedMode === "signup" ? "signup" : forcedMode === "login" ? "login" : hasSignedUp ? "login" : "signup";
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
