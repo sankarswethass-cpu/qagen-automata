@@ -4,8 +4,6 @@ import { Menu, X } from "lucide-react";
 
 const baseLinks = [
   { to: "/", label: "Home" },
-  { to: "/#features", label: "Features", hash: true },
-  { to: "/#how", label: "How It Works", hash: true },
 ];
 
 export default function Navbar() {
@@ -27,10 +25,7 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">
-            {links.map((l) =>
-              l.hash ? (
-                <a key={l.to} href={l.to} className="px-3 py-2 text-sm text-white/80 hover:text-accent transition-colors">{l.label}</a>
-              ) : (
+            {links.map((l) => (
                 <NavLink
                   key={l.to}
                   to={l.to}
@@ -41,14 +36,15 @@ export default function Navbar() {
                 >
                   {l.label}
                 </NavLink>
-              )
+            ))}
+            {!isAuthed && (
+              <Link
+                to="/login"
+                className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-primary-dark hover:scale-[1.03] transition-transform shadow-glow"
+              >
+                Get Started →
+              </Link>
             )}
-            <Link
-              to="/demo"
-              className="ml-3 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-primary-dark hover:scale-[1.03] transition-transform shadow-glow"
-            >
-              Request a Demo →
-            </Link>
           </div>
 
           <button
@@ -62,16 +58,14 @@ export default function Navbar() {
 
         {open && (
           <div className="lg:hidden border-t border-white/10 px-6 py-4 space-y-2 bg-primary-dark">
-            {links.map((l) =>
-              l.hash ? (
-                <a key={l.to} href={l.to} onClick={() => setOpen(false)} className="block py-2 text-white/85">{l.label}</a>
-              ) : (
-                <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className={`block py-2 ${loc.pathname === l.to ? "text-accent" : "text-white/85"}`}>{l.label}</Link>
-              )
+            {links.map((l) => (
+              <Link key={l.to} to={l.to} onClick={() => setOpen(false)} className={`block py-2 ${loc.pathname === l.to ? "text-accent" : "text-white/85"}`}>{l.label}</Link>
+            ))}
+            {!isAuthed && (
+              <Link to="/login" onClick={() => setOpen(false)} className="block text-center mt-3 rounded-lg bg-accent py-2.5 font-semibold text-primary-dark">
+                Get Started →
+              </Link>
             )}
-            <Link to="/demo" onClick={() => setOpen(false)} className="block text-center mt-3 rounded-lg bg-accent py-2.5 font-semibold text-primary-dark">
-              Request a Demo →
-            </Link>
           </div>
         )}
       </div>

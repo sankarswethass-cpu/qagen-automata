@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Zap, Search, Lock, Link2, FileCode, BarChart3, Clock, Target, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
@@ -25,7 +25,7 @@ type FieldErrors = Record<string, string>;
 export default function Login() {
   const navigate = useNavigate();
   const hasSignedUp = typeof window !== "undefined" && localStorage.getItem("qagen_signed_up") === "1";
-  const [tab, setTab] = useState<"login" | "signup">(hasSignedUp ? "login" : "signup");
+  const mode: "login" | "signup" = hasSignedUp ? "login" : "signup";
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -40,7 +40,7 @@ export default function Login() {
     fields.forEach((f) => { if (!String(form.get(f) || "").trim()) e[f] = "This field is required"; });
     const email = String(form.get("email") || "");
     if (email && !/^\S+@\S+\.\S+$/.test(email)) e.email = "Enter a valid email";
-    if (tab === "signup") {
+    if (mode === "signup") {
       const p = String(form.get("password") || "");
       const c = String(form.get("confirm") || "");
       if (p && c && p !== c) e.confirm = "Passwords don't match";
@@ -54,9 +54,10 @@ export default function Login() {
     const e = validate(data, ["email", "password"]);
     setErrors(e);
     if (Object.keys(e).length === 0) {
-      if (localStorage.getItem("qagen_signed_up") !== "1") {
-        toast.error("Please sign up first to create an account.");
-        setTab("signup");
+      const savedEmail = localStorage.getItem("qagen_email") || "";
+      const entered = String(data.get("email") || "").trim().toLowerCase();
+      if (savedEmail && entered !== savedEmail.toLowerCase()) {
+        setErrors({ email: "No account found for this email. Please sign up first." });
         return;
       }
       toast.success("Welcome back! Opening workbench…");
@@ -74,9 +75,12 @@ export default function Login() {
     if (Object.keys(e).length === 0) {
       toast.success("Account created! Please sign in to continue.");
       localStorage.setItem("qagen_signed_up", "1");
+      localStorage.setItem("qagen_email", String(data.get("email") || "").trim());
+      localStorage.setItem("qagen_name", String(data.get("name") || "").trim());
       ev.currentTarget.reset();
       setErrors({});
-      setTab("login");
+      // Force re-render to switch to login view
+      window.location.reload();
     }
   }
 
@@ -111,19 +115,16 @@ export default function Login() {
         {/* RIGHT */}
         <div className="bg-surface-light flex items-center justify-center p-8 lg:p-12">
           <div className="w-full max-w-md">
-            <h2 className="font-display text-3xl text-foreground">Welcome to QAGen AI</h2>
-            <p className="mt-2 text-muted-foreground">Sign in to access your QA dashboard.</p>
+            <h2 className="font-display text-3xl text-foreground">
+              {mode === "login" ? "Welcome back" : "Create your account"}
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              {mode === "login"
+                ? "Sign in to access your QA workbench."
+                : "Sign up to get started with QAGen AI."}
+            </p>
 
-            <div className="mt-7 flex border-b border-border">
-              {(["login", "signup"] as const).map((t) => (
-                <button key={t} onClick={() => { setTab(t); setErrors({}); }}
-                  className={`px-5 py-2.5 text-sm font-semibold capitalize -mb-px border-b-2 transition-colors ${tab === t ? "border-accent text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}>
-                  {t === "login" ? "Login" : "Sign Up"}
-                </button>
-              ))}
-            </div>
-
-            {tab === "login" ? (
+            {mode === "login" ? (
               <form onSubmit={handleLogin} className="mt-6 space-y-4" noValidate>
                 <div>
                   <label className="text-sm font-medium text-foreground">Email Address</label>
@@ -146,7 +147,6 @@ export default function Login() {
                 <button type="submit" className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors">Sign In</button>
                 <Divider />
                 <GoogleButton />
-                <p className="text-sm text-center text-muted-foreground">Don't have an account? <button type="button" onClick={() => setTab("signup")} className="text-accent font-medium hover:underline">Sign up</button></p>
               </form>
             ) : (
               <form onSubmit={handleSignup} className="mt-6 space-y-4" noValidate>
@@ -176,7 +176,6 @@ export default function Login() {
                 <button type="submit" className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors">Create Account</button>
                 <Divider />
                 <GoogleButton />
-                <p className="text-sm text-center text-muted-foreground">Already have an account? <button type="button" onClick={() => setTab("login")} className="text-accent font-medium hover:underline">Sign in</button></p>
                 <p className="text-xs text-center text-muted-foreground">By creating an account, you agree to our <a href="#" className="underline">Terms of Service</a> and <a href="#" className="underline">Privacy Policy</a>.</p>
               </form>
             )}

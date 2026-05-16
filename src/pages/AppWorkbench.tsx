@@ -264,6 +264,7 @@ type Integration = {
 
 const INTEGRATIONS: Integration[] = [
   { id: "github",     name: "GitHub",        desc: "Read issues, PRs & specs",            color: "#24292F", letter: "G" },
+  { id: "website",    name: "Website",       desc: "Crawl a live URL for context",        color: "#2563EB", letter: "W" },
 ];
 
 // ---------- Requirement validation ----------
@@ -336,6 +337,9 @@ export default function AppWorkbench() {
   const [repoUrl, setRepoUrl] = useState("");
   const [showRepoInput, setShowRepoInput] = useState(false);
   const [repoDraft, setRepoDraft] = useState("");
+  const [siteUrl, setSiteUrl] = useState("");
+  const [showSiteInput, setShowSiteInput] = useState(false);
+  const [siteDraft, setSiteDraft] = useState("");
   const [sample, setSample] = useState(SAMPLE);
   const [stats, setStats] = useState([
     { label: "Total",  value: 0 },
@@ -429,6 +433,18 @@ export default function AppWorkbench() {
       setShowRepoInput(true);
       return;
     }
+    if (id === "website") {
+      if (connected.includes("website")) {
+        setConnected((prev) => prev.filter((x) => x !== "website"));
+        setSiteUrl("");
+        setShowSiteInput(false);
+        toast.success("Disconnected Website");
+        return;
+      }
+      setSiteDraft(siteUrl);
+      setShowSiteInput(true);
+      return;
+    }
     setConnected((prev) => {
       if (prev.includes(id)) {
         toast.success(`Disconnected ${INTEGRATIONS.find((i) => i.id === id)?.name}`);
@@ -449,6 +465,18 @@ export default function AppWorkbench() {
     setConnected((prev) => (prev.includes("github") ? prev : [...prev, "github"]));
     setShowRepoInput(false);
     toast.success("Connected to GitHub");
+  }
+
+  function submitSite() {
+    const url = siteDraft.trim();
+    if (!/^https?:\/\/[^\s.]+\.[^\s]+/.test(url)) {
+      toast.error("Enter a valid website URL (https://example.com)");
+      return;
+    }
+    setSiteUrl(url);
+    setConnected((prev) => (prev.includes("website") ? prev : [...prev, "website"]));
+    setShowSiteInput(false);
+    toast.success("Connected to Website");
   }
 
 async function handleGenerate() {
@@ -614,7 +642,7 @@ async function handleGenerate() {
   function handleLogout() {
     localStorage.removeItem("qagen_auth");
     toast.success("Logged out");
-    navigate("/");
+    navigate("/login");
   }
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
@@ -690,7 +718,7 @@ async function handleGenerate() {
                   Ground tests in your real project context
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-                  Connect Jira, Azure DevOps, GitHub and more so QAGen can pull live tickets, acceptance criteria and API contracts.
+                  Connect a GitHub repository or a live website so QAGen grounds tests in your real code and product.
                 </p>
               </div>
               <button
@@ -789,6 +817,54 @@ async function handleGenerate() {
                 </div>
                 <button
                   onClick={() => { setRepoDraft(repoUrl); setShowRepoInput(true); }}
+                  className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
+                >
+                  Change
+                </button>
+              </div>
+            )}
+
+            {showSiteInput && (
+              <div className="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+                <label className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                  Website URL
+                </label>
+                <div className="mt-2 flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    autoFocus
+                    value={siteDraft}
+                    onChange={(e) => setSiteDraft(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitSite()}
+                    placeholder="https://example.com"
+                    className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <button
+                    onClick={submitSite}
+                    className="rounded-lg bg-accent text-primary-dark px-4 py-2 text-sm font-semibold hover:opacity-90 transition"
+                  >
+                    Connect
+                  </button>
+                  <button
+                    onClick={() => setShowSiteInput(false)}
+                    className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {connected.includes("website") && siteUrl && !showSiteInput && (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/5 p-3 text-sm">
+                <div className="min-w-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Connected website</div>
+                  <a href={siteUrl} target="_blank" rel="noreferrer" className="block truncate font-medium text-foreground hover:underline">
+                    {siteUrl}
+                  </a>
+                </div>
+                <button
+                  onClick={() => { setSiteDraft(siteUrl); setShowSiteInput(true); }}
                   className="shrink-0 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition"
                 >
                   Change

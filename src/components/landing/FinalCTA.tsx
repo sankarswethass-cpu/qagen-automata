@@ -8,10 +8,9 @@ export default function FinalCTA() {
         <p className="mt-5 text-lg text-white/90 max-w-2xl mx-auto">
           See how your team ships faster — without sacrificing QA quality.
         </p>
-        <Link to="/demo" className="inline-flex items-center gap-2 mt-9 rounded-xl bg-white px-8 py-4 text-lg font-semibold text-primary-dark shadow-card hover:scale-[1.04] transition-transform">
-          Request Your Demo →
+        <Link to="/login" className="inline-flex items-center gap-2 mt-9 rounded-xl bg-white px-8 py-4 text-lg font-semibold text-primary-dark shadow-card hover:scale-[1.04] transition-transform">
+          Get Started Free →
         </Link>
-        <p className="mt-4 text-sm text-white/80">No commitment. No credit card. Just a 30-minute live demo.</p>
       </div>
     </section>
   );
