@@ -11,13 +11,13 @@ export default function Navbar() {
   const loc = useLocation();
   const isAuthed =
     typeof window !== "undefined" && localStorage.getItem("qagen_auth") === "1";
+  const hasSignedUp =
+    typeof window !== "undefined" && localStorage.getItem("qagen_signed_up") === "1";
   const links = isAuthed
     ? [...baseLinks, { to: "/app", label: "Workbench" }]
-    : [
-        ...baseLinks,
-        { to: "/login", label: "Login" },
-        { to: "/login?mode=signup", label: "Sign Up" },
-      ];
+    : hasSignedUp
+    ? [...baseLinks, { to: "/login?mode=login", label: "Login" }]
+    : [...baseLinks, { to: "/login?mode=signup", label: "Sign Up" }];
 
   return (
     <header className="sticky top-0 z-50 w-full">
