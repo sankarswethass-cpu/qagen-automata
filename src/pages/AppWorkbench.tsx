@@ -586,7 +586,7 @@ async function handleGenerate() {
     setAgentIdx(AGENTS.length - 1);
     setGenerated(true);
     persistHistory(27, SAMPLE, fallbackStats);
-    toast.message("Showing demo output (backend unavailable)");
+    toast.message("Backend unavailable. Please try again.");
     console.error(err);
   } finally {
     setLoading(false);
