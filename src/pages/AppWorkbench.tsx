@@ -504,9 +504,10 @@ async function handleGenerate() {
       const text = input.toLowerCase();
       const hit = tokens.some((t) => text.includes(t));
       if (!hit) {
-        setValidation({ state: "mismatch" });
-        setGenerated(false);
-        return;
+        setValidation({ state: "ok" });
+        toast.warning(
+          "Inputs are varying from the connected GitHub repo. Generating based on your requirement input."
+        );
       }
     }
   }
