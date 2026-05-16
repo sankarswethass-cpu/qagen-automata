@@ -184,6 +184,13 @@ export default function Login() {
               </form>
             )}
 
+            <p className="mt-6 text-sm text-center text-muted-foreground">
+              {mode === "login" ? (
+                <>Don't have an account? <Link to="/login?mode=signup" className="text-accent font-medium hover:underline">Sign Up</Link></>
+              ) : (
+                <>Already have an account? <Link to="/login?mode=login" className="text-accent font-medium hover:underline">Log In</Link></>
+              )}
+            </p>
             <p className="mt-10 text-xs text-center text-muted-foreground">© 2026 QAGen AI. All rights reserved.</p>
           </div>
         </div>
