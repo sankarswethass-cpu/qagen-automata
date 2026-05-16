@@ -923,19 +923,19 @@ async function handleGenerate() {
               onKeyDown={(e) => {
                 if (loading) {
                   e.preventDefault();
-                  toast.message("Please wait, your test cases are being executed.");
+                  toast.message("Please wait, your test cases are getting generated.");
                 }
               }}
               onPaste={(e) => {
                 if (loading) {
                   e.preventDefault();
-                  toast.message("Please wait, your test cases are being executed.");
+                  toast.message("Please wait, your test cases are getting generated.");
                 }
               }}
               onMouseDown={(e) => {
                 if (loading) {
                   e.preventDefault();
-                  toast.message("Please wait, your test cases are being executed.");
+                  toast.message("Please wait, your test cases are getting generated.");
                 }
               }}
               className={`mt-3 w-full rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground font-mono-code focus:outline-none focus:ring-2 focus:ring-accent resize-y ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
