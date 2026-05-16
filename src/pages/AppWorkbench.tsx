@@ -914,7 +914,26 @@ async function handleGenerate() {
               onChange={(e) => { setInput(e.target.value); if (validation.state !== "ok") setValidation({ state: "ok" }); }}
               rows={10}
               placeholder="e.g. As a user, I want to reset my password via email so that I can regain access to my account..."
-              className="mt-3 w-full rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground font-mono-code focus:outline-none focus:ring-2 focus:ring-accent resize-y"
+              readOnly={loading}
+              onKeyDown={(e) => {
+                if (loading) {
+                  e.preventDefault();
+                  toast.message("Please wait, your test cases are being executed.");
+                }
+              }}
+              onPaste={(e) => {
+                if (loading) {
+                  e.preventDefault();
+                  toast.message("Please wait, your test cases are being executed.");
+                }
+              }}
+              onMouseDown={(e) => {
+                if (loading) {
+                  e.preventDefault();
+                  toast.message("Please wait, your test cases are being executed.");
+                }
+              }}
+              className={`mt-3 w-full rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground font-mono-code focus:outline-none focus:ring-2 focus:ring-accent resize-y ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
             />
             {validation.state === "empty" && (
               <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm flex items-start gap-3">
@@ -922,6 +941,19 @@ async function handleGenerate() {
                 <div>
                   <div className="font-semibold text-destructive">No requirement provided</div>
                   <div className="text-muted-foreground mt-0.5">Type a requirement, user story, or acceptance criteria above before generating.</div>
+                </div>
+              </div>
+            )}
+            {validation.state === "mismatch" && (
+              <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/10 p-4 text-sm flex items-start gap-3">
+                <AlertCircle size={18} className="text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-semibold text-destructive">Inputs are varying. Please mention the correct details.</div>
+                  <div className="text-muted-foreground mt-0.5">
+                    The requirement doesn't appear to reference the connected GitHub repository
+                    {repoUrl ? <> (<span className="font-medium text-foreground">{repoUrl}</span>)</> : null}.
+                    Update either the requirement or the GitHub link so they match.
+                  </div>
                 </div>
               </div>
             )}
