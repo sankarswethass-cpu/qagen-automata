@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Twitter, Linkedin, Github, Mail } from "lucide-react";
+import { Linkedin, Github, Mail } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -23,11 +23,10 @@ export default function Footer() {
         </div>
         <div>
           <h4 className="font-display text-lg mb-3">Connect</h4>
-          <a href="mailto:contact@qagen.ai" className="inline-flex items-center gap-2 text-sm text-white/75 hover:text-accent"><Mail size={16}/> contact@qagen.ai</a>
+          <a href="mailto:aiexplore89@gmail.com" className="inline-flex items-center gap-2 text-sm text-white/75 hover:text-accent"><Mail size={16}/> aiexplore89@gmail.com</a>
           <div className="mt-4 flex gap-3">
-            <a aria-label="Twitter" href="#" className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-accent hover:text-primary-dark transition"><Twitter size={16}/></a>
-            <a aria-label="LinkedIn" href="#" className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-accent hover:text-primary-dark transition"><Linkedin size={16}/></a>
-            <a aria-label="GitHub" href="#" className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-accent hover:text-primary-dark transition"><Github size={16}/></a>
+            <a aria-label="LinkedIn" href="https://www.linkedin.com/in/ram-bhajan-755a4239b/" target="_blank" rel="noopener noreferrer" className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-accent hover:text-primary-dark transition"><Linkedin size={16}/></a>
+            <a aria-label="GitHub" href="https://github.com/theoriginalaiexplorer" target="_blank" rel="noopener noreferrer" className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-accent hover:text-primary-dark transition"><Github size={16}/></a>
           </div>
         </div>
       </div>
