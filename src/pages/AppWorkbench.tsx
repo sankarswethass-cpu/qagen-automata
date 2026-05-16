@@ -1213,6 +1213,26 @@ async function handleGenerate() {
           )}
         </div>
       </main>
+      {showNewProject && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowNewProject(false)}>
+          <div className="w-full max-w-sm rounded-xl bg-card border border-border p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-display text-lg text-foreground">New Project</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Enter project name</p>
+            <input
+              autoFocus
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") createProject(); if (e.key === "Escape") setShowNewProject(false); }}
+              placeholder="Enter project name"
+              className="mt-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+            />
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => { setShowNewProject(false); setNewProjectName(""); }} className="rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-muted">Cancel</button>
+              <button onClick={createProject} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-light">Create</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
