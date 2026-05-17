@@ -433,8 +433,6 @@ export default function AppWorkbench() {
     { name: "Requirement Analyzer", icon: Brain },
     { name: "Coverage Planner",    icon: Search },
     { name: "Manual Case Writer",  icon: ClipboardList },
-    { name: "Playwright UI Agent", icon: Monitor },
-    { name: "Playwright API Agent", icon: Code2 },
     { name: "Security Reviewer",   icon: Shield },
   ];
 
@@ -680,8 +678,6 @@ async function handleGenerate() {
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "manual", label: "Manual Test Cases", icon: ClipboardList },
-    { id: "ui", label: "Playwright UI", icon: Monitor },
-    { id: "api", label: "Playwright API", icon: Plug },
   ];
 
   return (
