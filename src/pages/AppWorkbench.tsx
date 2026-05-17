@@ -547,8 +547,8 @@ async function handleGenerate() {
         body: JSON.stringify({ 
         requirement: input,
         use_rag: false,
-        include_ui: true,
-        include_api: true,
+        include_ui: false,
+        include_api: false,
         include_manual: true
       }),
       }
@@ -561,21 +561,17 @@ async function handleGenerate() {
 
     // Try to split by common section headers
     const manualMatch = fullOutput.match(/#{1,3}\s*(Manual Test Cases?[\s\S]*?)(?=#{1,3}\s*(Playwright|UI|API)|$)/i);
-    const uiMatch     = fullOutput.match(/#{1,3}\s*(Playwright UI[\s\S]*?)(?=#{1,3}\s*(Playwright API|API Test)|$)/i);
-    const apiMatch    = fullOutput.match(/#{1,3}\s*(Playwright API[\s\S]*?)$/i);
 
     setSample({
       manual: manualMatch ? manualMatch[0].trim() : (fullOutput || SAMPLE.manual),
-      ui:     uiMatch     ? uiMatch[0].trim()     : SAMPLE.ui,
-      api:    apiMatch    ? apiMatch[0].trim()     : SAMPLE.api,
+      ui:     SAMPLE.ui,
+      api:    SAMPLE.api,
     });
 
     const total = data.total_test_cases || 0;
     setStats([
       { label: "Total",  value: total },
-      { label: "Manual", value: Math.round(total * 0.1)  },
-      { label: "UI",     value: Math.round(total * 0.45) },
-      { label: "API",    value: Math.round(total * 0.45) },
+      { label: "Manual", value: total },
     ]);
     clearInterval(tick);
     setProgress(100);
@@ -611,9 +607,7 @@ async function handleGenerate() {
         ...entry,
         stats: overrideStats ?? [
           { label: "Total",  value: total },
-          { label: "Manual", value: Math.round(total * 0.1)  },
-          { label: "UI",     value: Math.round(total * 0.45) },
-          { label: "API",    value: Math.round(total * 0.45) },
+          { label: "Manual", value: total },
         ],
       };
       const next = [latest, ...loadHistory()];
