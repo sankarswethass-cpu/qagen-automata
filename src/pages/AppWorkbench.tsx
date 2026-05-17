@@ -1034,69 +1034,69 @@ async function handleGenerate() {
                 </div>
               </div>
             )}
-            {validation.state === "incomplete" && (
-              <div className="mt-3 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm">
-                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold">
-                  <AlertTriangle size={18} /> ✗ Incomplete Requirement
-                </div>
-                <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
-                  Requirement is incomplete. Please provide more detail.
-                </p>
-                <div className="mt-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">What is unclear:</div>
-                  <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
-                    {validation.unclear.map((u, i) => (<li key={i}>{u}</li>))}
-                  </ul>
-                </div>
-                <div className="mt-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">Information needed:</div>
-                  <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
-                    {validation.needed.map((u, i) => (<li key={i}>{u}</li>))}
-                  </ul>
-                </div>
-                <div className="mt-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-foreground">Example of a complete requirement:</div>
-                  <p className="mt-1 italic text-foreground/90">{validation.example}</p>
-                </div>
-              </div>
-            )}
             {validation.state === "incomplete" && (() => {
               const optimised = buildOptimisedPrompt(input);
               return (
-                <div className="mt-3 rounded-xl border border-accent/50 bg-accent/5 p-4 text-sm">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2 text-accent font-semibold">
-                      <Sparkles size={16} /> Optimised Prompt
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(optimised);
-                          setOptimisedCopied(true);
-                          setTimeout(() => setOptimisedCopied(false), 1600);
-                        }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition"
-                      >
-                        {optimisedCopied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setInput(optimised);
-                          setValidation({ state: "ok" });
-                          toast.success("Optimised prompt applied. You can edit or generate now.");
-                        }}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-accent text-primary-dark text-xs font-semibold hover:opacity-90 transition"
-                      >
-                        <Sparkles size={14} /> Use this prompt
-                      </button>
-                    </div>
+                <div className="mt-3 rounded-xl border border-amber-400/50 bg-amber-50 dark:bg-amber-950/30 p-4 text-sm">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold">
+                    <AlertTriangle size={18} /> Incomplete Requirement
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Your input looks incomplete. Here's a structured version you can use to get high-quality test cases.
+                  <p className="mt-1 text-amber-800/90 dark:text-amber-200/90">
+                    Requirement is incomplete. Please provide more detail.
                   </p>
-                  <pre className="mt-3 max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 font-mono-code text-xs leading-relaxed whitespace-pre-wrap text-foreground">
+                  <div className="mt-3">
+                    <div className="text-xs font-bold uppercase tracking-wider text-foreground">What is unclear:</div>
+                    <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
+                      {validation.unclear.map((u, i) => (<li key={i}>{u}</li>))}
+                    </ul>
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-xs font-bold uppercase tracking-wider text-foreground">Information needed:</div>
+                    <ul className="mt-1 list-disc pl-5 space-y-1 text-foreground/90">
+                      {validation.needed.map((u, i) => (<li key={i}>{u}</li>))}
+                    </ul>
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-xs font-bold uppercase tracking-wider text-foreground">Example of a complete requirement:</div>
+                    <p className="mt-1 italic text-foreground/90">{validation.example}</p>
+                  </div>
+
+                  {/* Optimised Prompt — inside the same yellow box */}
+                  <div className="mt-4 pt-4 border-t border-amber-300/40">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold">
+                        <Sparkles size={16} /> Optimised Prompt
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(optimised);
+                            setOptimisedCopied(true);
+                            setTimeout(() => setOptimisedCopied(false), 1600);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition"
+                        >
+                          {optimisedCopied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setInput(optimised);
+                            setValidation({ state: "ok" });
+                            toast.success("Optimised prompt applied. You can edit or generate now.");
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-accent text-primary-dark text-xs font-semibold hover:opacity-90 transition"
+                        >
+                          <Sparkles size={14} /> Use this prompt
+                        </button>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Your input looks incomplete. Here&apos;s a structured version you can use to get high-quality test cases.
+                    </p>
+                    <pre className="mt-3 max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 font-mono-code text-xs leading-relaxed whitespace-pre-wrap text-foreground">
 {optimised}
-                  </pre>
+                    </pre>
+                  </div>
                 </div>
               );
             })()}
