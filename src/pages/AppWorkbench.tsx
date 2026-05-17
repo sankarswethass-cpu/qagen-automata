@@ -1027,9 +1027,25 @@ async function handleGenerate() {
                     </div>
                   ))}
                 </div>
-                <pre className="flex-1 overflow-auto bg-primary-dark text-white/90 p-5 font-mono-code text-xs leading-relaxed whitespace-pre">
-{sample[tab]}
-                </pre>
+                {tab === "manual" ? (
+                  <div className="flex-1 overflow-auto bg-card p-6 prose prose-sm max-w-none prose-headings:font-display prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-code:text-primary prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-table:text-sm prose-th:bg-muted prose-th:text-foreground prose-td:text-foreground/90 prose-li:text-foreground/90 prose-hr:border-border">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {sample.manual || "_No manual test cases returned._"}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-auto bg-primary-dark text-xs">
+                    <SyntaxHighlighter
+                      language="typescript"
+                      style={oneDark}
+                      showLineNumbers
+                      customStyle={{ margin: 0, padding: "1.25rem", background: "transparent", fontSize: "12px", lineHeight: 1.6 }}
+                      codeTagProps={{ style: { fontFamily: "JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" } }}
+                    >
+                      {sample[tab] || "// No script generated."}
+                    </SyntaxHighlighter>
+                  </div>
+                )}
               </>
             )}
           </div>
