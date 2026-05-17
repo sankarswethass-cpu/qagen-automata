@@ -756,7 +756,21 @@ async function handleGenerate() {
         <div className="mt-8 grid lg:grid-cols-[5fr_7fr] gap-6">
           {/* INPUT */}
           <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
-            <div className="text-xs font-semibold tracking-widest text-muted-foreground">REQUIREMENT INPUT</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-xs font-semibold tracking-widest text-muted-foreground">REQUIREMENT INPUT</div>
+              {input && !loading && (
+                <button
+                  onClick={() => {
+                    setInput("");
+                    setValidation({ state: "ok" });
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-card text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition"
+                  title="Clear requirement"
+                >
+                  <Trash2 size={12} /> Clear
+                </button>
+              )}
+            </div>
             <textarea
               value={input}
               onChange={(e) => { setInput(e.target.value); if (validation.state !== "ok") setValidation({ state: "ok" }); }}
