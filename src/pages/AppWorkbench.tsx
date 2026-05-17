@@ -393,6 +393,7 @@ export default function AppWorkbench() {
   const [progress, setProgress] = useState(0);
   const [agentIdx, setAgentIdx] = useState(0);
   const [validation, setValidation] = useState<Validation>({ state: "ok" });
+  const [optimisedCopied, setOptimisedCopied] = useState(false);
 
   // Projects & history
   const [projects, setProjects] = useState<Project[]>([]);
