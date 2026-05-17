@@ -44,7 +44,11 @@ function parseFileBlocks(content: string): { filename: string; code: string }[] 
 //   API Automation Test Scripts     → Playwright API tab
 //   Playwright UI / Playwright API  → fallback aliases
 function parseOutputSections(fullOutput: string): { manual: string; ui: string; api: string } {
-  const SECTION_RE = /(?=#{1,4}\s*(?:Manual Test Cases?|UI Automation Test Scripts|API Automation Test Scripts|Playwright UI\b|Playwright API\b))/gi;
+  const NUM_PREFIX = "(?:\\d+\\.\\s+)?";
+  const SECTION_RE = new RegExp(
+    `(?=#{1,4}\\s*${NUM_PREFIX}(?:Manual Test Cases?|UI Automation Test Scripts|API Automation Test Scripts|Playwright UI\\b|Playwright API\\b))`,
+    "gi"
+  );
   const parts = fullOutput.split(SECTION_RE);
 
   let manual = "";
@@ -54,11 +58,11 @@ function parseOutputSections(fullOutput: string): { manual: string; ui: string; 
   for (const part of parts) {
     const trimmed = part.trim();
     if (!trimmed) continue;
-    if (/^#{1,4}\s*Manual Test Cases?/i.test(trimmed)) {
+    if (/^#{1,4}\s*(?:\d+\.\s+)?Manual Test Cases?/i.test(trimmed)) {
       manual = trimmed;
-    } else if (/^#{1,4}\s*(?:UI Automation Test Scripts|Playwright UI\b)/i.test(trimmed)) {
+    } else if (/^#{1,4}\s*(?:\d+\.\s+)?(?:UI Automation Test Scripts|Playwright UI\b)/i.test(trimmed)) {
       ui = trimmed;
-    } else if (/^#{1,4}\s*(?:API Automation Test Scripts|Playwright API\b)/i.test(trimmed)) {
+    } else if (/^#{1,4}\s*(?:\d+\.\s+)?(?:API Automation Test Scripts|Playwright API\b)/i.test(trimmed)) {
       api = trimmed;
     }
   }
