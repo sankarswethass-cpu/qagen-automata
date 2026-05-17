@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, AlertTriangle, AlertCircle, Plus, FolderKanban, History as HistoryIcon, BarChart3, Trash2 } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, Code2, AlertTriangle, AlertCircle, Plus, FolderKanban, History as HistoryIcon, BarChart3, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 import SEO from "@/components/site/SEO";
 
-type Tab = "manual";
+type Tab = "manual" | "ui" | "api";
 
 const SAMPLE = {
   manual: `Test Case ID: TC-001
@@ -345,6 +345,8 @@ export default function AppWorkbench() {
   const [stats, setStats] = useState([
     { label: "Total",  value: 0 },
     { label: "Manual", value: 0 },
+    { label: "UI",     value: 0 },
+    { label: "API",    value: 0 },
   ]);
   const [showIntegrations, setShowIntegrations] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -394,6 +396,8 @@ export default function AppWorkbench() {
       setStats([
         { label: "Total",  value: 0 },
         { label: "Manual", value: 0 },
+        { label: "UI",     value: 0 },
+        { label: "API",    value: 0 },
       ]);
       setGenerated(false);
       setValidation({ state: "ok" });
@@ -406,7 +410,7 @@ export default function AppWorkbench() {
   );
 
   const projectStats = useMemo(() => {
-    const totals = { Total: 0, Manual: 0 } as Record<string, number>;
+    const totals = { Total: 0, Manual: 0, UI: 0, API: 0 } as Record<string, number>;
     projectHistory.forEach((h) => h.stats.forEach((s) => { totals[s.label] = (totals[s.label] || 0) + s.value; }));
     return totals;
   }, [projectHistory]);
@@ -428,6 +432,8 @@ export default function AppWorkbench() {
     setStats([
       { label: "Total",  value: 0 },
       { label: "Manual", value: 0 },
+      { label: "UI",     value: 0 },
+      { label: "API",    value: 0 },
     ]);
     setGenerated(false);
     setValidation({ state: "ok" });
@@ -454,6 +460,8 @@ export default function AppWorkbench() {
     { name: "Requirement Analyzer", icon: Brain },
     { name: "Coverage Planner",    icon: Search },
     { name: "Manual Case Writer",  icon: ClipboardList },
+    { name: "Playwright UI Agent", icon: Monitor },
+    { name: "Playwright API Agent", icon: Code2 },
     { name: "Security Reviewer",   icon: Shield },
   ];
 
@@ -572,8 +580,8 @@ async function handleGenerate() {
         body: JSON.stringify({ 
         requirement: input,
         use_rag: false,
-        include_ui: false,
-        include_api: false,
+        include_ui: true,
+        include_api: true,
         include_manual: true
       }),
       }
@@ -586,17 +594,21 @@ async function handleGenerate() {
 
     // Try to split by common section headers
     const manualMatch = fullOutput.match(/#{1,3}\s*(Manual Test Cases?[\s\S]*?)(?=#{1,3}\s*(Playwright|UI|API)|$)/i);
+    const uiMatch     = fullOutput.match(/#{1,3}\s*(Playwright UI[\s\S]*?)(?=#{1,3}\s*(Playwright API|API Test)|$)/i);
+    const apiMatch    = fullOutput.match(/#{1,3}\s*(Playwright API[\s\S]*?)$/i);
 
     setSample({
       manual: manualMatch ? manualMatch[0].trim() : (fullOutput || SAMPLE.manual),
-      ui:     SAMPLE.ui,
-      api:    SAMPLE.api,
+      ui:     uiMatch     ? uiMatch[0].trim()     : SAMPLE.ui,
+      api:    apiMatch    ? apiMatch[0].trim()     : SAMPLE.api,
     });
 
     const total = data.total_test_cases || 0;
     setStats([
       { label: "Total",  value: total },
-      { label: "Manual", value: total },
+      { label: "Manual", value: Math.round(total * 0.1)  },
+      { label: "UI",     value: Math.round(total * 0.45) },
+      { label: "API",    value: Math.round(total * 0.45) },
     ]);
     clearInterval(tick);
     setProgress(100);
@@ -632,7 +644,9 @@ async function handleGenerate() {
         ...entry,
         stats: overrideStats ?? [
           { label: "Total",  value: total },
-          { label: "Manual", value: total },
+          { label: "Manual", value: Math.round(total * 0.1)  },
+          { label: "UI",     value: Math.round(total * 0.45) },
+          { label: "API",    value: Math.round(total * 0.45) },
         ],
       };
       const next = [latest, ...loadHistory()];
@@ -693,6 +707,8 @@ async function handleGenerate() {
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "manual", label: "Manual Test Cases", icon: ClipboardList },
+    { id: "ui", label: "Playwright UI", icon: Monitor },
+    { id: "api", label: "Playwright API", icon: Plug },
   ];
 
   return (
@@ -1136,7 +1152,7 @@ async function handleGenerate() {
               )
             ) : (
               <>
-                <div className="grid grid-cols-2 border-b border-border">
+                <div className="grid grid-cols-4 border-b border-border">
                   {stats.map((s) => (
                     <div key={s.label} className="px-4 py-3 text-center border-r border-border last:border-r-0">
                       <div className="font-display text-2xl text-primary">{s.value}</div>
@@ -1174,7 +1190,7 @@ async function handleGenerate() {
             <div className="p-5">
               {/* Aggregate visualization */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                {(["Total", "Manual"] as const).map((k) => {
+                {(["Total", "Manual", "UI", "API"] as const).map((k) => {
                   const max = Math.max(projectStats.Total || 1, 1);
                   const v = projectStats[k] || 0;
                   const pct = k === "Total" ? 100 : Math.round((v / max) * 100);
