@@ -153,7 +153,7 @@ export default function AppWorkbench() {
   const [siteUrl, setSiteUrl] = useState("");
   const [showSiteInput, setShowSiteInput] = useState(false);
   const [siteDraft, setSiteDraft] = useState("");
-  const [sample, setSample] = useState(SAMPLE);
+  const [sample, setSample] = useState(EMPTY_SAMPLE);
   const [stats, setStats] = useState([
     { label: "Total",  value: 0 },
     { label: "Manual", value: 0 },
@@ -175,6 +175,10 @@ export default function AppWorkbench() {
   const [showHistory, setShowHistory] = useState(true);
 
   useEffect(() => {
+    if (!sessionStorage.getItem("qagen_token")) {
+      navigate("/login");
+      return;
+    }
     let p = loadProjects();
     if (p.length === 0) {
       p = [{ id: crypto.randomUUID(), name: "Default Project", createdAt: Date.now() }];
@@ -205,7 +209,7 @@ export default function AppWorkbench() {
       setValidation({ state: "ok" });
     } else {
       setInput("");
-      setSample(SAMPLE);
+      setSample(EMPTY_SAMPLE);
       setStats([
         { label: "Total",  value: 0 },
         { label: "Manual", value: 0 },
@@ -241,7 +245,7 @@ export default function AppWorkbench() {
     setShowNewProject(false);
     // Clear previous requirement input and test cases for a fresh start
     setInput("");
-    setSample(SAMPLE);
+    setSample(EMPTY_SAMPLE);
     setStats([
       { label: "Total",  value: 0 },
       { label: "Manual", value: 0 },
@@ -385,20 +389,29 @@ async function handleGenerate() {
   }, 450);
 
   try {
+    const token = sessionStorage.getItem("qagen_token") || "";
     const res = await fetch(
       `${import.meta.env.VITE_API_URL}/generate`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-        requirement: input,
-        use_rag: false,
-        include_ui: true,
-        include_api: true,
-        include_manual: true
-      }),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          requirement: input,
+          use_rag: false,
+          include_ui: true,
+          include_api: true,
+          include_manual: true,
+        }),
       }
     );
+    if (res.status === 401) {
+      sessionStorage.removeItem("qagen_token");
+      navigate("/login");
+      return;
+    }
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
     const data = await res.json();
 
@@ -441,7 +454,7 @@ async function handleGenerate() {
   }
 }
 
-  function persistHistory(total: number, overrideSample?: typeof SAMPLE, overrideStats?: typeof stats) {
+  function persistHistory(total: number, overrideSample?: SampleOutput, overrideStats?: typeof stats) {
     if (!currentProjectId) return;
     const entry: HistoryEntry = {
       id: crypto.randomUUID(),
@@ -513,7 +526,7 @@ async function handleGenerate() {
   }
 
   function handleLogout() {
-    localStorage.removeItem("qagen_auth");
+    sessionStorage.removeItem("qagen_token");
     toast.success("Logged out");
     navigate("/login");
   }

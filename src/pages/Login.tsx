@@ -33,6 +33,7 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [submitting, setSubmitting] = useState(false);
 
   const inputClass = (name: string) =>
     `w-full rounded-lg border bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent transition ${
@@ -52,39 +53,77 @@ export default function Login() {
     return e;
   }
 
-  function handleLogin(ev: React.FormEvent<HTMLFormElement>) {
+  async function handleLogin(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     const data = new FormData(ev.currentTarget);
     const e = validate(data, ["email", "password"]);
     setErrors(e);
-    if (Object.keys(e).length === 0) {
-      const savedEmail = localStorage.getItem("qagen_email") || "";
-      const entered = String(data.get("email") || "").trim().toLowerCase();
-      if (savedEmail && entered !== savedEmail.toLowerCase()) {
-        setErrors({ email: "No account found for this email. Please sign up first." });
+    if (Object.keys(e).length > 0) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: String(data.get("email") || "").trim(),
+          password: String(data.get("password") || ""),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setErrors({ password: err.detail || "Invalid email or password" });
         return;
       }
+      const { access_token } = await res.json();
+      sessionStorage.setItem("qagen_token", access_token);
       toast.success("Welcome back! Opening workbench…");
-      localStorage.setItem("qagen_auth", "1");
-      ev.currentTarget.reset();
-      setTimeout(() => navigate("/app"), 400);
+      navigate("/app");
+    } catch {
+      setErrors({ password: "Could not connect to server. Please try again." });
+    } finally {
+      setSubmitting(false);
     }
   }
 
-  function handleSignup(ev: React.FormEvent<HTMLFormElement>) {
+  async function handleSignup(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     const data = new FormData(ev.currentTarget);
     const e = validate(data, ["name", "email", "company", "password", "confirm"]);
     setErrors(e);
-    if (Object.keys(e).length === 0) {
+    if (Object.keys(e).length > 0) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: String(data.get("email") || "").trim(),
+          password: String(data.get("password") || ""),
+          name: String(data.get("name") || "").trim(),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setErrors({ email: err.detail || "Signup failed. Please try again." });
+        return;
+      }
+      const body = await res.json();
       localStorage.setItem("qagen_signed_up", "1");
       localStorage.setItem("qagen_email", String(data.get("email") || "").trim());
-      localStorage.setItem("qagen_name", String(data.get("name") || "").trim());
-      localStorage.setItem("qagen_auth", "1");
+      if (body.email_confirmation_required) {
+        toast.info("Check your email to confirm your account, then sign in.");
+        navigate("/login?mode=login");
+        return;
+      }
+      sessionStorage.setItem("qagen_token", body.access_token);
       toast.success("Account created! Opening workbench…");
-      ev.currentTarget.reset();
-      setErrors({});
-      setTimeout(() => navigate("/app"), 400);
+      navigate("/app");
+    } catch {
+      setErrors({ email: "Could not connect to server. Please try again." });
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -148,7 +187,9 @@ export default function Login() {
                 <div className="text-right">
                   <a href="#" className="text-sm font-medium text-accent hover:underline">Forgot Password?</a>
                 </div>
-                <button type="submit" className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors">Sign In</button>
+                <button type="submit" disabled={submitting} className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors disabled:opacity-70">
+                  {submitting ? "Signing in…" : "Sign In"}
+                </button>
               </form>
             ) : (
               <form onSubmit={handleSignup} className="mt-6 space-y-4" noValidate>
@@ -175,7 +216,9 @@ export default function Login() {
                   </div>
                   {errors.confirm && <p className="mt-1 text-xs text-destructive">{errors.confirm}</p>}
                 </div>
-                <button type="submit" className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors">Create Account</button>
+                <button type="submit" disabled={submitting} className="w-full rounded-lg bg-primary text-white py-3 font-semibold hover:bg-primary-light transition-colors disabled:opacity-70">
+                  {submitting ? "Creating account…" : "Create Account"}
+                </button>
                 <p className="text-xs text-center text-muted-foreground">By creating an account, you agree to our <a href="#" className="underline">Terms of Service</a> and <a href="#" className="underline">Privacy Policy</a>.</p>
               </form>
             )}

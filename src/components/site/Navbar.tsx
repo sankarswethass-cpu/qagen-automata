@@ -10,7 +10,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   const isAuthed =
-    typeof window !== "undefined" && localStorage.getItem("qagen_auth") === "1";
+    typeof window !== "undefined" && sessionStorage.getItem("qagen_token") !== null;
   const hasSignedUp =
     typeof window !== "undefined" && localStorage.getItem("qagen_signed_up") === "1";
   const links = isAuthed
