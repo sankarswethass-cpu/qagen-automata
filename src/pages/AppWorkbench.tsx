@@ -411,7 +411,7 @@ async function handleGenerate() {
     const apiMatch    = fullOutput.match(/#{1,3}\s*(Playwright API[\s\S]*?)$/i);
 
     setSample({
-      manual: manualMatch ? manualMatch[0].trim() : (fullOutput || SAMPLE.manual),
+      manual: stripAutomationFromManual(manualMatch ? manualMatch[0].trim() : fullOutput),
       ui:     uiMatch     ? uiMatch[0].trim()     : SAMPLE.ui,
       api:    apiMatch    ? apiMatch[0].trim()     : SAMPLE.api,
     });
