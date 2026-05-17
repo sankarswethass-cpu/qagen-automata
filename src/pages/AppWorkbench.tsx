@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, ClipboardList, Monitor, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, Code2, AlertTriangle, AlertCircle, Plus, FolderKanban, History as HistoryIcon, BarChart3, Trash2 } from "lucide-react";
+import { Sparkles, Loader2, ClipboardList, Plug, Copy, Check, LogOut, Link2, X as XIcon, FileText, FileDown, FileCode, Brain, Search, Shield, AlertTriangle, AlertCircle, Plus, FolderKanban, History as HistoryIcon, BarChart3, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/site/Navbar";
 import SEO from "@/components/site/SEO";
 
-type Tab = "manual" | "ui" | "api";
+type Tab = "manual";
 
 const SAMPLE = {
   manual: `Test Case ID: TC-001
