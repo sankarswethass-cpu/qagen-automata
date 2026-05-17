@@ -458,7 +458,16 @@ async function handleGenerate() {
 
     // Backend returns one markdown_output string — split into sections
     const fullOutput = data.markdown_output || "No output returned.";
+    console.log("[qagen] raw fullOutput:\n", fullOutput);
     const sections = parseOutputSections(fullOutput);
+    console.log("[qagen] sections.manual length:", sections.manual.length);
+    console.log("[qagen] sections.ui length:", sections.ui.length, "| preview:", sections.ui.slice(0, 120));
+    console.log("[qagen] sections.api length:", sections.api.length, "| preview:", sections.api.slice(0, 120));
+
+    const uiFileBlocks = parseFileBlocks(sections.ui);
+    console.log("[qagen] UI file blocks found:", uiFileBlocks.length, uiFileBlocks.map(b => b.filename));
+    const apiFileBlocks = parseFileBlocks(sections.api);
+    console.log("[qagen] API file blocks found:", apiFileBlocks.length, apiFileBlocks.map(b => b.filename));
 
     setSample({
       manual: stripAutomationFromManual(sections.manual || fullOutput),
