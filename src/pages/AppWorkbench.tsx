@@ -399,6 +399,19 @@ export default function AppWorkbench() {
     toast.success(`Project "${name}" created`);
     setNewProjectName("");
     setShowNewProject(false);
+    // Clear previous requirement input and test cases for a fresh start
+    setInput("");
+    setSample(SAMPLE);
+    setStats([
+      { label: "Total",  value: 0 },
+      { label: "Manual", value: 0 },
+      { label: "UI",     value: 0 },
+      { label: "API",    value: 0 },
+    ]);
+    setGenerated(false);
+    setValidation({ state: "ok" });
+    setProgress(0);
+    setAgentIdx(0);
   }
 
   function deleteHistoryEntry(id: string) {
@@ -577,21 +590,11 @@ async function handleGenerate() {
     persistHistory(total);
     toast.success(`Generated ${total} test cases from your backend!`);
   } catch (err) {
-    // Fall back to demo content so UI still demonstrates progress + 3 tabs
     clearInterval(tick);
-    setSample(SAMPLE);
-    const fallbackStats = [
-      { label: "Total",  value: 27 },
-      { label: "Manual", value: 2 },
-      { label: "UI",     value: 12 },
-      { label: "API",    value: 13 },
-    ];
-    setStats(fallbackStats);
-    setProgress(100);
-    setAgentIdx(AGENTS.length - 1);
-    setGenerated(true);
-    persistHistory(27, SAMPLE, fallbackStats);
-    toast.message("Backend unavailable. Please try again.");
+    setProgress(0);
+    setAgentIdx(0);
+    setGenerated(false);
+    toast.error("Backend unavailable. Please try again.");
     console.error(err);
   } finally {
     setLoading(false);
