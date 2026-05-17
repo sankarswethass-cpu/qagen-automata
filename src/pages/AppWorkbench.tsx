@@ -406,7 +406,7 @@ export default function AppWorkbench() {
   );
 
   const projectStats = useMemo(() => {
-    const totals = { Total: 0, Manual: 0, UI: 0, API: 0 } as Record<string, number>;
+    const totals = { Total: 0, Manual: 0 } as Record<string, number>;
     projectHistory.forEach((h) => h.stats.forEach((s) => { totals[s.label] = (totals[s.label] || 0) + s.value; }));
     return totals;
   }, [projectHistory]);
