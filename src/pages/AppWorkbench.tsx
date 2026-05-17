@@ -375,6 +375,31 @@ export default function AppWorkbench() {
     if (currentProjectId) localStorage.setItem(CURRENT_PROJECT_KEY, currentProjectId);
   }, [currentProjectId]);
 
+  // When switching to a project, auto-load its latest history entry (requirement + test cases)
+  useEffect(() => {
+    if (!currentProjectId) return;
+    const entries = loadHistory()
+      .filter((h) => h.projectId === currentProjectId)
+      .sort((a, b) => b.createdAt - a.createdAt);
+    if (entries.length > 0) {
+      const h = entries[0];
+      setInput(h.requirement);
+      setSample(h.sample);
+      setStats(h.stats);
+      setGenerated(true);
+      setValidation({ state: "ok" });
+    } else {
+      setInput("");
+      setSample(SAMPLE);
+      setStats([
+        { label: "Total",  value: 0 },
+        { label: "Manual", value: 0 },
+      ]);
+      setGenerated(false);
+      setValidation({ state: "ok" });
+    }
+  }, [currentProjectId]);
+
   const projectHistory = useMemo(
     () => history.filter((h) => h.projectId === currentProjectId).sort((a, b) => b.createdAt - a.createdAt),
     [history, currentProjectId]
