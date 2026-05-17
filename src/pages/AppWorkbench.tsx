@@ -305,6 +305,47 @@ function validateRequirement(text: string): Validation {
   return { state: "ok" };
 }
 
+// ---------- Optimised prompt builder ----------
+// When the user's requirement is incomplete, build a richer, well-structured
+// prompt they can use as-is. Keeps the user's intent but adds the standard
+// acceptance-criteria scaffolding the test generator expects.
+function buildOptimisedPrompt(raw: string): string {
+  const t = (raw || "").trim();
+  const seed = t || "the feature described above";
+  // Try to detect a feature noun (login, signup, checkout, search, password reset...)
+  const featureMatch = t.match(/\b(login|sign[- ]?in|sign[- ]?up|register|registration|checkout|payment|password reset|forgot password|search|upload|profile|dashboard|logout|booking|subscription)\b/i);
+  const feature = featureMatch ? featureMatch[0].toLowerCase() : "the requested feature";
+  return [
+    `As a registered user, I want to use ${feature} so that I can achieve the outcome described: "${seed}".`,
+    ``,
+    `Acceptance Criteria:`,
+    `1. Actor & Preconditions`,
+    `   - The actor is an authenticated end user (or guest where applicable).`,
+    `   - The user is on the relevant screen / endpoint for ${feature}.`,
+    ``,
+    `2. Inputs & Validation`,
+    `   - All required fields must be provided and validated (format, length, allowed characters).`,
+    `   - Invalid or missing inputs must show clear, field-level error messages.`,
+    ``,
+    `3. Happy Path`,
+    `   - When the user submits valid inputs, the system processes the request and returns a success response (HTTP 200 / UI confirmation).`,
+    `   - The user is redirected or shown the expected next state.`,
+    ``,
+    `4. Negative & Edge Cases`,
+    `   - Invalid credentials / inputs return an appropriate error (e.g. 400/401) without leaking sensitive info.`,
+    `   - Boundary values (min/max length, empty, very large input, unicode) are handled gracefully.`,
+    ``,
+    `5. Non-Functional`,
+    `   - Response time should be under 2s for the happy path.`,
+    `   - Sensitive data must be transmitted over HTTPS and never logged.`,
+    `   - Rate limiting should protect against brute-force or abuse.`,
+    ``,
+    `6. Expected Outcome`,
+    `   - On success: clear confirmation and correct state transition.`,
+    `   - On failure: actionable error message and no partial state changes.`,
+  ].join("\n");
+}
+
 // ---------- Projects & history (localStorage) ----------
 type Project = { id: string; name: string; createdAt: number };
 type HistoryEntry = {
@@ -352,6 +393,7 @@ export default function AppWorkbench() {
   const [progress, setProgress] = useState(0);
   const [agentIdx, setAgentIdx] = useState(0);
   const [validation, setValidation] = useState<Validation>({ state: "ok" });
+  const [optimisedCopied, setOptimisedCopied] = useState(false);
 
   // Projects & history
   const [projects, setProjects] = useState<Project[]>([]);
@@ -1018,6 +1060,46 @@ async function handleGenerate() {
                 </div>
               </div>
             )}
+            {validation.state === "incomplete" && (() => {
+              const optimised = buildOptimisedPrompt(input);
+              return (
+                <div className="mt-3 rounded-xl border border-accent/50 bg-accent/5 p-4 text-sm">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 text-accent font-semibold">
+                      <Sparkles size={16} /> Optimised Prompt
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(optimised);
+                          setOptimisedCopied(true);
+                          setTimeout(() => setOptimisedCopied(false), 1600);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-card text-xs font-medium text-foreground hover:bg-muted transition"
+                      >
+                        {optimisedCopied ? <><Check size={14} className="text-accent" /> Copied</> : <><Copy size={14} /> Copy</>}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setInput(optimised);
+                          setValidation({ state: "ok" });
+                          toast.success("Optimised prompt applied. You can edit or generate now.");
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-accent text-primary-dark text-xs font-semibold hover:opacity-90 transition"
+                      >
+                        <Sparkles size={14} /> Use this prompt
+                      </button>
+                    </div>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Your input looks incomplete. Here's a structured version you can use to get high-quality test cases.
+                  </p>
+                  <pre className="mt-3 max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 font-mono-code text-xs leading-relaxed whitespace-pre-wrap text-foreground">
+{optimised}
+                  </pre>
+                </div>
+              );
+            })()}
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               {["Happy Path", "Negative", "Edge Cases", "Boundary", "Security", "Cross-Platform"].map((s) => (
                 <span key={s} className="px-2.5 py-1 rounded-full bg-primary/10 text-primary font-medium">{s}</span>
