@@ -345,6 +345,8 @@ export default function AppWorkbench() {
   const [stats, setStats] = useState([
     { label: "Total",  value: 0 },
     { label: "Manual", value: 0 },
+    { label: "UI",     value: 0 },
+    { label: "API",    value: 0 },
   ]);
   const [showIntegrations, setShowIntegrations] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -394,6 +396,8 @@ export default function AppWorkbench() {
       setStats([
         { label: "Total",  value: 0 },
         { label: "Manual", value: 0 },
+        { label: "UI",     value: 0 },
+        { label: "API",    value: 0 },
       ]);
       setGenerated(false);
       setValidation({ state: "ok" });
@@ -406,7 +410,7 @@ export default function AppWorkbench() {
   );
 
   const projectStats = useMemo(() => {
-    const totals = { Total: 0, Manual: 0 } as Record<string, number>;
+    const totals = { Total: 0, Manual: 0, UI: 0, API: 0 } as Record<string, number>;
     projectHistory.forEach((h) => h.stats.forEach((s) => { totals[s.label] = (totals[s.label] || 0) + s.value; }));
     return totals;
   }, [projectHistory]);
@@ -428,6 +432,8 @@ export default function AppWorkbench() {
     setStats([
       { label: "Total",  value: 0 },
       { label: "Manual", value: 0 },
+      { label: "UI",     value: 0 },
+      { label: "API",    value: 0 },
     ]);
     setGenerated(false);
     setValidation({ state: "ok" });
@@ -454,6 +460,8 @@ export default function AppWorkbench() {
     { name: "Requirement Analyzer", icon: Brain },
     { name: "Coverage Planner",    icon: Search },
     { name: "Manual Case Writer",  icon: ClipboardList },
+    { name: "Playwright UI Agent", icon: Monitor },
+    { name: "Playwright API Agent", icon: Code2 },
     { name: "Security Reviewer",   icon: Shield },
   ];
 
@@ -693,6 +701,8 @@ async function handleGenerate() {
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "manual", label: "Manual Test Cases", icon: ClipboardList },
+    { id: "ui", label: "Playwright UI", icon: Monitor },
+    { id: "api", label: "Playwright API", icon: Plug },
   ];
 
   return (
