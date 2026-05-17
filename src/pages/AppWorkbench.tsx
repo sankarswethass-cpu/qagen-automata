@@ -25,6 +25,47 @@ function stripAutomationFromManual(md: string): string {
     .trim();
 }
 
+// Extract individual file blocks from a script section.
+// Matches patterns like:  ### File: `path/to/file.ts`  followed by a ```typescript block.
+function parseFileBlocks(content: string): { filename: string; code: string }[] {
+  const blocks: { filename: string; code: string }[] = [];
+  const re = /#{2,4}\s*File:\s*`([^`]+)`\s*\n+```(?:typescript|ts)\n([\s\S]*?)```/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(content)) !== null) {
+    blocks.push({ filename: m[1].trim(), code: m[2].trim() });
+  }
+  return blocks;
+}
+
+// Split backend markdown_output into the three tabs.
+// Section header mapping:
+//   Manual Test Cases               → manual tab
+//   API Automation Test Scripts     → Playwright UI tab
+//   UI Automation Test Scripts      → Playwright API tab
+//   Playwright UI / Playwright API  → fallback aliases
+function parseOutputSections(fullOutput: string): { manual: string; ui: string; api: string } {
+  const SECTION_RE = /(?=#{1,3}\s*(?:Manual Test Cases?|API Automation Test Scripts|UI Automation Test Scripts|Playwright UI\b|Playwright API\b))/gi;
+  const parts = fullOutput.split(SECTION_RE);
+
+  let manual = "";
+  let ui = "";
+  let api = "";
+
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    if (/^#{1,3}\s*Manual Test Cases?/i.test(trimmed)) {
+      manual = trimmed;
+    } else if (/^#{1,3}\s*(?:API Automation Test Scripts|Playwright UI\b)/i.test(trimmed)) {
+      ui = trimmed;
+    } else if (/^#{1,3}\s*(?:UI Automation Test Scripts|Playwright API\b)/i.test(trimmed)) {
+      api = trimmed;
+    }
+  }
+
+  return { manual, ui, api };
+}
+
 type Integration = {
   id: string;
   name: string;
@@ -417,16 +458,12 @@ async function handleGenerate() {
 
     // Backend returns one markdown_output string — split into sections
     const fullOutput = data.markdown_output || "No output returned.";
-
-    // Try to split by common section headers
-    const manualMatch = fullOutput.match(/#{1,3}\s*(Manual Test Cases?[\s\S]*?)(?=#{1,3}\s*(Playwright|UI|API)|$)/i);
-    const uiMatch     = fullOutput.match(/#{1,3}\s*(Playwright UI[\s\S]*?)(?=#{1,3}\s*(Playwright API|API Test)|$)/i);
-    const apiMatch    = fullOutput.match(/#{1,3}\s*(Playwright API[\s\S]*?)$/i);
+    const sections = parseOutputSections(fullOutput);
 
     setSample({
-      manual: stripAutomationFromManual(manualMatch ? manualMatch[0].trim() : fullOutput),
-      ui:     uiMatch     ? uiMatch[0].trim()     : SAMPLE.ui,
-      api:    apiMatch    ? apiMatch[0].trim()     : SAMPLE.api,
+      manual: stripAutomationFromManual(sections.manual || fullOutput),
+      ui:     sections.ui  || SAMPLE.ui,
+      api:    sections.api || SAMPLE.api,
     });
 
     const total = data.total_test_cases || 0;
@@ -1046,19 +1083,45 @@ async function handleGenerate() {
                       {sample.manual || "_No manual test cases returned._"}
                     </ReactMarkdown>
                   </div>
-                ) : (
-                  <div className="flex-1 overflow-auto bg-primary-dark text-xs">
-                    <SyntaxHighlighter
-                      language="typescript"
-                      style={oneDark}
-                      showLineNumbers
-                      customStyle={{ margin: 0, padding: "1.25rem", background: "transparent", fontSize: "12px", lineHeight: 1.6 }}
-                      codeTagProps={{ style: { fontFamily: "JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" } }}
-                    >
-                      {sample[tab] || "// No script generated."}
-                    </SyntaxHighlighter>
-                  </div>
-                )}
+                ) : (() => {
+                  const fileBlocks = parseFileBlocks(sample[tab]);
+                  if (fileBlocks.length > 0) {
+                    return (
+                      <div className="flex-1 overflow-auto bg-primary-dark divide-y divide-white/10">
+                        {fileBlocks.map(({ filename, code }, idx) => (
+                          <div key={`${idx}-${filename}`}>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-[#1a1d27] border-b border-white/10 sticky top-0 z-10">
+                              <FileCode size={13} className="text-accent shrink-0" />
+                              <span className="font-mono-code text-[11px] text-accent/90 truncate">{filename}</span>
+                            </div>
+                            <SyntaxHighlighter
+                              language="typescript"
+                              style={oneDark}
+                              showLineNumbers
+                              customStyle={{ margin: 0, padding: "1.25rem", background: "transparent", fontSize: "12px", lineHeight: 1.6 }}
+                              codeTagProps={{ style: { fontFamily: "JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" } }}
+                            >
+                              {code}
+                            </SyntaxHighlighter>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex-1 overflow-auto bg-primary-dark text-xs">
+                      <SyntaxHighlighter
+                        language="typescript"
+                        style={oneDark}
+                        showLineNumbers
+                        customStyle={{ margin: 0, padding: "1.25rem", background: "transparent", fontSize: "12px", lineHeight: 1.6 }}
+                        codeTagProps={{ style: { fontFamily: "JetBrains Mono, ui-monospace, Menlo, Consolas, monospace" } }}
+                      >
+                        {sample[tab] || "// No script generated."}
+                      </SyntaxHighlighter>
+                    </div>
+                  );
+                })()}
               </>
             )}
           </div>
