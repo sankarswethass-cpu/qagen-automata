@@ -305,6 +305,47 @@ function validateRequirement(text: string): Validation {
   return { state: "ok" };
 }
 
+// ---------- Optimised prompt builder ----------
+// When the user's requirement is incomplete, build a richer, well-structured
+// prompt they can use as-is. Keeps the user's intent but adds the standard
+// acceptance-criteria scaffolding the test generator expects.
+function buildOptimisedPrompt(raw: string): string {
+  const t = (raw || "").trim();
+  const seed = t || "the feature described above";
+  // Try to detect a feature noun (login, signup, checkout, search, password reset...)
+  const featureMatch = t.match(/\b(login|sign[- ]?in|sign[- ]?up|register|registration|checkout|payment|password reset|forgot password|search|upload|profile|dashboard|logout|booking|subscription)\b/i);
+  const feature = featureMatch ? featureMatch[0].toLowerCase() : "the requested feature";
+  return [
+    `As a registered user, I want to use ${feature} so that I can achieve the outcome described: "${seed}".`,
+    ``,
+    `Acceptance Criteria:`,
+    `1. Actor & Preconditions`,
+    `   - The actor is an authenticated end user (or guest where applicable).`,
+    `   - The user is on the relevant screen / endpoint for ${feature}.`,
+    ``,
+    `2. Inputs & Validation`,
+    `   - All required fields must be provided and validated (format, length, allowed characters).`,
+    `   - Invalid or missing inputs must show clear, field-level error messages.`,
+    ``,
+    `3. Happy Path`,
+    `   - When the user submits valid inputs, the system processes the request and returns a success response (HTTP 200 / UI confirmation).`,
+    `   - The user is redirected or shown the expected next state.`,
+    ``,
+    `4. Negative & Edge Cases`,
+    `   - Invalid credentials / inputs return an appropriate error (e.g. 400/401) without leaking sensitive info.`,
+    `   - Boundary values (min/max length, empty, very large input, unicode) are handled gracefully.`,
+    ``,
+    `5. Non-Functional`,
+    `   - Response time should be under 2s for the happy path.`,
+    `   - Sensitive data must be transmitted over HTTPS and never logged.`,
+    `   - Rate limiting should protect against brute-force or abuse.`,
+    ``,
+    `6. Expected Outcome`,
+    `   - On success: clear confirmation and correct state transition.`,
+    `   - On failure: actionable error message and no partial state changes.`,
+  ].join("\n");
+}
+
 // ---------- Projects & history (localStorage) ----------
 type Project = { id: string; name: string; createdAt: number };
 type HistoryEntry = {
