@@ -153,7 +153,7 @@ export default function AppWorkbench() {
   const [siteUrl, setSiteUrl] = useState("");
   const [showSiteInput, setShowSiteInput] = useState(false);
   const [siteDraft, setSiteDraft] = useState("");
-  const [sample, setSample] = useState(EMPTY_SAMPLE);
+  const [sample, setSample] = useState(SAMPLE);
   const [stats, setStats] = useState([
     { label: "Total",  value: 0 },
     { label: "Manual", value: 0 },
@@ -209,7 +209,7 @@ export default function AppWorkbench() {
       setValidation({ state: "ok" });
     } else {
       setInput("");
-      setSample(EMPTY_SAMPLE);
+      setSample(SAMPLE);
       setStats([
         { label: "Total",  value: 0 },
         { label: "Manual", value: 0 },
@@ -245,7 +245,7 @@ export default function AppWorkbench() {
     setShowNewProject(false);
     // Clear previous requirement input and test cases for a fresh start
     setInput("");
-    setSample(EMPTY_SAMPLE);
+    setSample(SAMPLE);
     setStats([
       { label: "Total",  value: 0 },
       { label: "Manual", value: 0 },
