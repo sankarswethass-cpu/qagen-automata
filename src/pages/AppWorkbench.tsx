@@ -40,11 +40,11 @@ function parseFileBlocks(content: string): { filename: string; code: string }[] 
 // Split backend markdown_output into the three tabs.
 // Section header mapping:
 //   Manual Test Cases               → manual tab
-//   API Automation Test Scripts     → Playwright UI tab
-//   UI Automation Test Scripts      → Playwright API tab
+//   UI Automation Test Scripts      → Playwright UI tab
+//   API Automation Test Scripts     → Playwright API tab
 //   Playwright UI / Playwright API  → fallback aliases
 function parseOutputSections(fullOutput: string): { manual: string; ui: string; api: string } {
-  const SECTION_RE = /(?=#{1,3}\s*(?:Manual Test Cases?|API Automation Test Scripts|UI Automation Test Scripts|Playwright UI\b|Playwright API\b))/gi;
+  const SECTION_RE = /(?=#{1,4}\s*(?:Manual Test Cases?|UI Automation Test Scripts|API Automation Test Scripts|Playwright UI\b|Playwright API\b))/gi;
   const parts = fullOutput.split(SECTION_RE);
 
   let manual = "";
@@ -54,11 +54,11 @@ function parseOutputSections(fullOutput: string): { manual: string; ui: string; 
   for (const part of parts) {
     const trimmed = part.trim();
     if (!trimmed) continue;
-    if (/^#{1,3}\s*Manual Test Cases?/i.test(trimmed)) {
+    if (/^#{1,4}\s*Manual Test Cases?/i.test(trimmed)) {
       manual = trimmed;
-    } else if (/^#{1,3}\s*(?:API Automation Test Scripts|Playwright UI\b)/i.test(trimmed)) {
+    } else if (/^#{1,4}\s*(?:UI Automation Test Scripts|Playwright UI\b)/i.test(trimmed)) {
       ui = trimmed;
-    } else if (/^#{1,3}\s*(?:UI Automation Test Scripts|Playwright API\b)/i.test(trimmed)) {
+    } else if (/^#{1,4}\s*(?:API Automation Test Scripts|Playwright API\b)/i.test(trimmed)) {
       api = trimmed;
     }
   }
@@ -465,9 +465,9 @@ async function handleGenerate() {
     console.log("[qagen] sections.api length:", sections.api.length, "| preview:", sections.api.slice(0, 120));
 
     const uiFileBlocks = parseFileBlocks(sections.ui);
-    console.log("[qagen] UI file blocks found:", uiFileBlocks.length, uiFileBlocks.map(b => b.filename));
+    console.log("[qagen] Playwright UI file blocks found:", uiFileBlocks.length, uiFileBlocks.map(b => b.filename));
     const apiFileBlocks = parseFileBlocks(sections.api);
-    console.log("[qagen] API file blocks found:", apiFileBlocks.length, apiFileBlocks.map(b => b.filename));
+    console.log("[qagen] Playwright API file blocks found:", apiFileBlocks.length, apiFileBlocks.map(b => b.filename));
 
     setSample({
       manual: stripAutomationFromManual(sections.manual || fullOutput),
