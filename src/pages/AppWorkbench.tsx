@@ -1136,7 +1136,7 @@ async function handleGenerate() {
               )
             ) : (
               <>
-                <div className="grid grid-cols-4 border-b border-border">
+                <div className="grid grid-cols-2 border-b border-border">
                   {stats.map((s) => (
                     <div key={s.label} className="px-4 py-3 text-center border-r border-border last:border-r-0">
                       <div className="font-display text-2xl text-primary">{s.value}</div>
@@ -1174,7 +1174,7 @@ async function handleGenerate() {
             <div className="p-5">
               {/* Aggregate visualization */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                {(["Total", "Manual", "UI", "API"] as const).map((k) => {
+                {(["Total", "Manual"] as const).map((k) => {
                   const max = Math.max(projectStats.Total || 1, 1);
                   const v = projectStats[k] || 0;
                   const pct = k === "Total" ? 100 : Math.round((v / max) * 100);
