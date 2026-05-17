@@ -345,8 +345,6 @@ export default function AppWorkbench() {
   const [stats, setStats] = useState([
     { label: "Total",  value: 0 },
     { label: "Manual", value: 0 },
-    { label: "UI",     value: 0 },
-    { label: "API",    value: 0 },
   ]);
   const [showIntegrations, setShowIntegrations] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -405,8 +403,6 @@ export default function AppWorkbench() {
     setStats([
       { label: "Total",  value: 0 },
       { label: "Manual", value: 0 },
-      { label: "UI",     value: 0 },
-      { label: "API",    value: 0 },
     ]);
     setGenerated(false);
     setValidation({ state: "ok" });
